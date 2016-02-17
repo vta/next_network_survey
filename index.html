@@ -4,23 +4,53 @@
 <head>
     <meta charset="utf-8">
     <title>Quiz</title>
+    <style>
+        .question {
+            width: 300px;
+        }
+        
+        .question label {
+            display: block;
+        }
+        
+        .question.range>div {
+            width: 25px;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .question.range>input {
+            width: 230px;
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        
+        .question.range>input+div {
+            float: right;
+        }
+    </style>
     <script>
         /* based on http://stackoverflow.com/a/18337257/940217 */
 (function(W){
-    var QuestionsAnswers = [],questions_wrapper= null,main_form = null,results_wrapper = null,btn,D,user_answers=[], answer_index = 0,question_index =0;
-
+    var QuestionsAnswers=[], AnswerInputs=[], user_answers=[], answer_index=0, question_index=0;
+    var questions_wrapper=null, main_form=null, results_wrapper=null, btn;
+    
     function ajax(a,b,c){c=new XMLHttpRequest;c.open('GET',a);c.onload=b;c.send()}
 
     function set(){
         QuestionsAnswers=JSON.parse(this.response);
         QuestionsAnswers.forEach(function(e) {
-            addQuestion(e.question, e.answers);
+            if (e.type === "radio"){
+                addRadioQuestion(e.question, e.answers);
+            } else if(e.type === "range"){
+                addRangeQuestion(e.question, e.answers);
+            }
         });
     }
 
     function ok(){
         var question_index = 0;
-        var user_selected = document.querySelectorAll('input[type="radio"]:checked');
+        var user_selected = AnswerInputs;
         user_answers = [];
         for (var i = 0; i < user_selected.length; i++) {
             question_index = user_selected[i].name.split('_')[1];
@@ -37,23 +67,24 @@
         results_wrapper.innerHTML = JSON.stringify(user_answers, null, ' ');
     }
 
-    function addQuestion(question, answers) {
-        var frag = D.createDocumentFragment();
-        var q_wrapper = D.createElement('div');
-        q_wrapper.class = "question";
+    function addRadioQuestion(question, answers) {
+        var frag = document.createDocumentFragment();
+        var q_wrapper = document.createElement('div');
+        q_wrapper.class = "question radio";
 
-        var q = D.createElement('p');
+        var q = document.createElement('p');
         q.innerText = question;
         frag.appendChild(q);
 
         for (var c = 0; c < answers.length; c++) {
-            var a_input = D.createElement('input');
-            var a_label = D.createElement('label');
+            var a_input = document.createElement('input');
+            var a_label = document.createElement('label');
             a_input.type = 'radio';
             a_input.required=true;
             a_input.name = 'q_'+question_index;
             a_input.value = answers[c];
             a_input.id='a_'+answer_index;
+            AnswerInputs.push(a_input);
             a_label.innerText = answers[c];
             a_label.htmlFor='a_'+answer_index;
             q_wrapper.appendChild(a_input);
@@ -64,13 +95,53 @@
         question_index++;
         questions_wrapper.appendChild(frag);
     }
+    
+    function addRangeQuestion(question, answers) {
+        if (answers.length !== 2){
+            window.console.error('Malformed question: need two and only two answers for a "range" question');
+            return;
+        }
+        var frag = document.createDocumentFragment();
+        var q_wrapper = document.createElement('div');
+        q_wrapper.className = "question range";
+            
+        var a_label = document.createElement('label');
+        a_label.innerText = question;
+        a_label.htmlFor='a_'+answer_index;
+        q_wrapper.appendChild(a_label);
+        
+        var choice_1 = document.createElement('div');
+        choice_1.innerText = answers[0];
+        q_wrapper.appendChild(choice_1);
+        
+        var a_input = document.createElement('input');
+        a_input.type = 'range';
+        a_input.required=true;
+        a_input.name = 'q_'+question_index;
+        a_input.id='a_'+answer_index;
+        a_input.min="0";
+        a_input.max="10";
+        a_input.step="1";
+        AnswerInputs.push(a_input);
+        q_wrapper.appendChild(a_input);
+        
+        var choice_2 = document.createElement('div');
+        choice_2.innerText = answers[1];
+        q_wrapper.appendChild(choice_2);
+        
+        frag.appendChild(q_wrapper);
+        answer_index++;
+        
+        question_index++;
+        questions_wrapper.appendChild(frag);
+    }
 
     function init(){
         D=W.document;
-        questions_wrapper=D.getElementById('questions_wrapper');
-        results_wrapper= D.getElementById('results_wrapper');
+        questions_wrapper=document.getElementById('questions_wrapper');
+        results_wrapper= document.getElementById('results_wrapper');
         btn=D.getElementById('btn');
-        main_form = D.getElementById('main_form');
+        main_form = document.getElementById('main_form');
         main_form.addEventListener('submit',function(event){
             event.preventDefault();
             ok();
