@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Quiz</title>
+    <script>
+        /* based on http://stackoverflow.com/a/18337257/940217 */
+(function(W){
+    var QuestionsAnswers = [],questions_wrapper= null,main_form = null,results_wrapper = null,btn,D,user_answers=[], answer_index = 0,question_index =0;
+
+    function ajax(a,b,c){c=new XMLHttpRequest;c.open('GET',a);c.onload=b;c.send()}
+
+    function set(){
+        QuestionsAnswers=JSON.parse(this.response);
+        QuestionsAnswers.forEach(function(e) {
+            addQuestion(e.question, e.answers);
+        });
+    }
+
+    function ok(){
+        var question_index = 0;
+        var user_selected = document.querySelectorAll('input[type="radio"]:checked');
+        user_answers = [];
+        for (var i = 0; i < user_selected.length; i++) {
+            question_index = user_selected[i].name.split('_')[1];
+            user_answers[question_index] = {
+                'q':QuestionsAnswers[question_index].question,
+                'a':user_selected[i].value
+            };
+        }
+        if (main_form.checkValidity())
+            done();
+    }
+    
+    function done(){
+        results_wrapper.innerHTML = JSON.stringify(user_answers, null, ' ');
+    }
+
+    function addQuestion(question, answers) {
+        var frag = D.createDocumentFragment();
+        var q_wrapper = D.createElement('div');
+        q_wrapper.class = "question";
+
+        var q = D.createElement('p');
+        q.innerText = question;
+        frag.appendChild(q);
+
+        for (var c = 0; c < answers.length; c++) {
+            var a_input = D.createElement('input');
+            var a_label = D.createElement('label');
+            a_input.type = 'radio';
+            a_input.required=true;
+            a_input.name = 'q_'+question_index;
+            a_input.value = answers[c];
+            a_input.id='a_'+answer_index;
+            a_label.innerText = answers[c];
+            a_label.htmlFor='a_'+answer_index;
+            q_wrapper.appendChild(a_input);
+            q_wrapper.appendChild(a_label);
+            frag.appendChild(q_wrapper);
+            answer_index++;
+        }
+        question_index++;
+        questions_wrapper.appendChild(frag);
+    }
+
+    function init(){
+        D=W.document;
+        questions_wrapper=D.getElementById('questions_wrapper');
+        results_wrapper= D.getElementById('results_wrapper');
+        btn=D.getElementById('btn');
+        main_form = D.getElementById('main_form');
+        main_form.addEventListener('submit',function(event){
+            event.preventDefault();
+            ok();
+            },false);
+        ajax('questions.js',set);
+    }
+    W.addEventListener('load',init,false);
+})(window);
+    </script>
+</head>
+
+<body>
+    <form id="main_form">
+        <div id="questions_wrapper"></div>
+        <button id="btn" type="submit">OK</button>
+    </form>
+    <div id="results_wrapper"></div>
+</body>
+
+</html>
