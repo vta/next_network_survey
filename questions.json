@@ -1,0 +1,144 @@
+{
+    "survey": [
+        {
+            "id":"1001",
+            "question": "More frequent rides during peak hours or even frequency throughout the day?",
+            "answers": [
+                "peak-oriented",
+                "all-day"
+            ],
+            "type": "range",
+            "scale": [
+                1,
+                5
+            ]
+        },
+        {
+            "id":"1002",
+            "question": "Allocate more resources for weekdays or treat weekdays and weekends equally?",
+            "answers": [
+                "Emphasis on weekday service",
+                "equal weekday and weekend service"
+            ],
+            "type": "range",
+            "scale": [
+                1,
+                5
+            ]
+        },
+        {
+            "id":"1003",
+            "question": "Would you prefer that spacing between stops is closer together for less walking, or wider apart for faster travel speeds?",
+            "answers": [
+                "Close stop spacing and easy access",
+                "Wide stop spacing and faster travel speeds"
+            ],
+            "type": "range",
+            "scale": [
+                1,
+                5
+            ]
+        },
+        {
+            "id":"1004",
+            "question": "More direct routing or more frequent service that requires changing buses?",
+            "answers": [
+                "Direct service that runs infrequently",
+                "Frequent service that requires a transfer"
+            ],
+            "type": "range",
+            "scale": [
+                1,
+                5
+            ]
+        },
+        {
+            "id":"1005",
+            "question": "Place the cost of transit on the riders or everyone in the county?",
+            "answers": [
+                "Low fares",
+                "Low farebox/high public subsidy"
+            ],
+            "type": "range",
+            "scale": [
+                1,
+                5
+            ]
+        },
+        {
+            "id":"1006",
+            "question": "Short walk, long wait, or long walk, short wait?",
+            "answers": [
+                "Short walk to infrequent transit",
+                "Longer walk to frequent transit"
+            ],
+            "type": "range",
+            "scale": [
+                1,
+                5
+            ]
+        },
+        {
+            "id":"1007",
+            "question": "Widen clockwise coverage at the expense of midday service?",
+            "answers": [
+                "Expand early morning/late night service hours",
+                "More peak and midday service"
+            ],
+            "type": "range",
+            "scale": [
+                1,
+                5
+            ]
+        }
+    ],
+    "demographics": [
+        {
+            "id":"2001",
+            "question": "zipcode",
+            "type": "zip"
+        },
+        {
+            "id":"2002",
+            "question": "income",
+            "answers": [
+                "Under $15,000",
+                "$15,000 to $24,999",
+                "$25,000 to $34,999",
+                "$35,000 to $49,999",
+                "$50,000 to $99,999",
+                "$100,000 to $149,999",
+                "$150,000 to $199,999",
+                "$200,000 and above"
+            ],
+            "type": "dropdown"
+        },
+        {
+            "id":"2003",
+            "question": "age",
+            "answers": [
+                "13 and under",
+                "14 to 17",
+                "18 to 24",
+                "25 to 34",
+                "35 to 44",
+                "45 to 54",
+                "55 to 64",
+                "65 or older"
+            ],
+            "type": "dropdown"
+        },
+        {
+            "id":"2004",
+            "question": "What is your primary mode of transportation?",
+            "answers": [
+                "Driving solo",
+                "Car Pooling",
+                "Transit",
+                "Walking",
+                "Biking"
+            ],
+            "type": "dropdown"
+        }
+    ]
+}

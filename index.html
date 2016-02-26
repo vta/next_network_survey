@@ -1,37 +1,21 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Quiz</title>
-    <style>
-        .question {
-            width: 300px;
-        }
 
-        .question label {
-            display: block;
-        }
+    <link rel="stylesheet" href="/squarespace-css/normalize.css" type="text/css">
 
-        .question.range>div {
-            width: 25px;
-            display: inline-block;
-            text-align: center;
-        }
 
-        .question.range>input {
-            width: 230px;
-            margin-left: 10px;
-            margin-right: 10px;
-        }
 
-        .question.range>input+div {
-            float: right;
-        }
-    </style>
+    <link rel="stylesheet" href="tradeoffs.css">
+
+    <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
     <script>
-        /* based on http://stackoverflow.com/a/18337257/940217 */
-(function(W){
+        (function(W){
     "use strict";
     var QuestionDefinitions=[];
     var answer_index=0;
@@ -39,17 +23,6 @@
     var questions_wrapper=null;
     var results_wrapper=null;
     var main_form;
-
-    function ajax(a,b,c){
-        c=new XMLHttpRequest();
-        c.open('GET',a);
-        c.onload=function(){
-            if (c.readyState === XMLHttpRequest.DONE) {
-                b(c.responseText);
-            }
-        }
-        ;c.send();
-    }
 
     function setOrPush(target, val) {
         var result = val;
@@ -102,130 +75,134 @@
         }
     }
 
-
-
-    function addRadioQuestion(question, answers) {
+    function addRadioQuestion(o) {
+        var question = o.question;
+        var answers = o.answers;
         if (answers.length < 2){
-            W.console.warn('Malformed question: need at least two answers to a "radio" question. Q: %s, A: %s', question, answers.join(','));
+            W.console.warn('Malformed question: need at least two answers to a "radio" question.', o);
             return;
         }
-        var frag = document.createDocumentFragment();
-        var q_wrapper = document.createElement('div');
-        q_wrapper.class = "question radio";
+        var $frag = $(document.createDocumentFragment());
+        var $q_wrapper = $('<div class="question radio"/>');
 
-        var q = document.createElement('p');
-        q.innerText = question;
-        frag.appendChild(q);
+        $('<p>').text(question).appendTo($frag);
+
         answers.forEach(function(ans){
-            var a_input = document.createElement('input');
-            var a_label = document.createElement('label');
-            a_input.type = 'radio';
-            a_input.required=true;
-            a_input.name = 'q_'+question_index;
-            a_input.value = ans;
-            a_input.id='a_'+answer_index;
-            a_label.innerText = ans;
-            a_label.htmlFor='a_'+answer_index;
-            q_wrapper.appendChild(a_input);
-            q_wrapper.appendChild(a_label);
-            frag.appendChild(q_wrapper);
+            $('<input type="radio"/>').attr({
+                id:'a_'+answer_index,
+                name: 'q_'+question_index,
+                required : 'true',
+                value: ans
+            }).appendTo($q_wrapper);
+
+            $('<label/>').attr({
+                for:'a_'+answer_index
+            }).text(ans).appendTo($q_wrapper);
+
             answer_index+=1;
         });
+
         question_index+=1;
-        questions_wrapper.appendChild(frag);
+        $frag.append($q_wrapper);
+        $frag.appendTo(questions_wrapper);
     }
 
-        function addCheckboxQuestion(question, answers) {
+    function addCheckboxQuestion(o) {
+        var qid = o.id;
+        var question = o.question;
+        var answers = o.answers;
         if (answers.length < 0){
-            W.console.warn('Malformed question: need at least one answer to a "checkbox" question. Q: %s, A: %s', question, answers.join(','));
+            W.console.warn('Malformed question: need at least one answer to a "checkbox" question.', o);
             return;
         }
-        var frag = document.createDocumentFragment();
-        var q_wrapper = document.createElement('div');
-        q_wrapper.class = "question checkbox";
 
-        var q = document.createElement('p');
-        q.innerText = question;
-        frag.appendChild(q);
+        var $frag = $(document.createDocumentFragment());
+        var $q_wrapper = $('<div class="question checkbox"/>');
+
+        $('<p>').text(question).appendTo($frag);
+
         answers.forEach(function(ans){
-            var a_input = document.createElement('input');
-            var a_label = document.createElement('label');
-            a_input.type = 'checkbox';
-            a_input.name = 'q_'+question_index;
-            a_input.value = ans;
-            a_input.id='a_'+answer_index;
-            a_label.innerText = ans;
-            a_label.htmlFor='a_'+answer_index;
-            q_wrapper.appendChild(a_input);
-            q_wrapper.appendChild(a_label);
-            frag.appendChild(q_wrapper);
+            $('<input type="checkbox"/>').attr({
+                id:'a_'+answer_index,
+                name: qid,
+                value: ans
+            }).appendTo($q_wrapper);
+
+            $('<label/>').attr({
+                for:'a_'+answer_index
+            }).text(ans).appendTo($q_wrapper);
+
             answer_index+=1;
         });
         question_index+=1;
-        questions_wrapper.appendChild(frag);
+
+        $frag.append($q_wrapper);
+        $frag.appendTo(questions_wrapper);
     }
 
-    function addRangeQuestion(question, answers) {
+    function addRangeQuestion(o) {
+        var qid = o.id;
+        var question = o.question;
+        var answers = o.answers;
+        var input_vals = {'min':o.scale[0],'max':o.scale[1],'step':1};
+
         if (answers.length !== 2){
-            W.console.warn('Malformed question: need two and only two answers for a "range" question. Q: %s, A: %s', question, answers.join(','));
+            W.console.warn('Malformed question: need two and only two answers for a "range" question.', o);
             return;
         }
-        var frag = document.createDocumentFragment();
-        var q_wrapper = document.createElement('div');
-        q_wrapper.className = "question range";
 
-        var a_label = document.createElement('label');
-        a_label.innerText = question;
-        a_label.htmlFor='a_'+answer_index;
-        q_wrapper.appendChild(a_label);
+        var $frag = $(document.createDocumentFragment());
+        var $q_wrapper = $('<div class="question range"/>');
 
-        var choice_1 = document.createElement('div');
-        choice_1.innerText = answers[0];
-        q_wrapper.appendChild(choice_1);
+        $('<label>').attr({
+            for:'a_'+answer_index
+        }).text(question).appendTo($q_wrapper);
 
-        var a_input = document.createElement('input');
-        var input_vals = {'min':0,'max':10,'step':1};
-        var dl = document.createElement('datalist');
-        dl.id = 'q_'+question_index+'_dl';
-        a_input.type = 'range';
-        a_input.required=true;
-        a_input.name = 'q_'+question_index;
-        a_input.id='a_'+answer_index;
-        a_input.min=input_vals.min;
-        a_input.max=input_vals.max;
-        a_input.step=input_vals.step;
-        a_input.setAttribute('list',dl.id);
-        var i = input_vals.min;
-        var opt = null;
-        while(i <= input_vals.max){
-            opt = document.createElement('option');
-            opt.value=i;
-            dl.appendChild(opt);
-            i = i + input_vals.step;
+
+
+
+        var $left_option = $('<div>').addClass('left').text(answers[0]).appendTo($q_wrapper);
+
+        var $right_option = $('<div>').addClass('left').text(answers[1]);
+
+        var dl_id = 'q_'+question_index+'_dl';
+
+        var $r_input = $('<input type="range"/>').attr({
+            id:'a_'+answer_index,
+            name: qid,
+            required:true,
+            list:dl_id,
+            min:input_vals.min,
+            max:input_vals.max,
+            step:input_vals.step
+        }).appendTo($q_wrapper);
+
+
+        var $dl = $('<datalist/>').attr({ id: dl_id}).appendTo($q_wrapper);
+        for (var i = input_vals.min; i <= input_vals.max; i=i + input_vals.step){
+            $('<option/>').attr({
+                value : i
+            }).appendTo($dl);
         }
-        q_wrapper.appendChild(a_input);
-        q_wrapper.appendChild(dl);
 
-        var choice_2 = document.createElement('div');
-        choice_2.innerText = answers[1];
-        q_wrapper.appendChild(choice_2);
+        $right_option.appendTo($q_wrapper);
 
-        frag.appendChild(q_wrapper);
         answer_index+=1;
-
         question_index+=1;
-        questions_wrapper.appendChild(frag);
+
+        $frag.append($q_wrapper);
+        $frag.appendTo(questions_wrapper);
     }
 
     function set(response){
-        QuestionDefinitions=JSON.parse(response);
+        QuestionDefinitions=response['survey'];
         QuestionDefinitions.forEach(function(e) {
             if (e.type === "radio"){
-                addRadioQuestion(e.question, e.answers);
+                addRadioQuestion(e);
             } else if(e.type === "range"){
-                addRangeQuestion(e.question, e.answers);
+                addRangeQuestion(e);
             } else if(e.type === "checkbox"){
-                addCheckboxQuestion(e.question, e.answers);
+                addCheckboxQuestion(e);
             }
         });
     }
@@ -238,7 +215,11 @@
             event.preventDefault();
             ok();
             },false);
-        ajax('questions.js',set);
+
+        $.ajax({
+            url: "questions.json"
+        }).done(set);
+
     }
     W.addEventListener('load',init,false);
 })(window);
@@ -248,9 +229,10 @@
 <body>
     <form id="main_form">
         <div id="questions_wrapper"></div>
-        <button id="btn" type="submit">OK</button>
+        <button id="btn" type="submit">Submit answers and view results</button>
     </form>
     <div id="results_wrapper"></div>
+
 </body>
 
 </html>
