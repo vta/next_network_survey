@@ -1,9 +1,10 @@
 {
-    "survey": [
+    "id" : 1,
+    "questions": [
         {
             "id":"1001",
-            "question": "More frequent rides during peak hours or even frequency throughout the day?",
-            "answers": [
+            "question_text": "More frequent rides during peak hours or even frequency throughout the day?",
+            "choices": [
                 "peak-oriented",
                 "all-day"
             ],
@@ -15,8 +16,8 @@
         },
         {
             "id":"1002",
-            "question": "Allocate more resources for weekdays or treat weekdays and weekends equally?",
-            "answers": [
+            "question_text": "Allocate more resources for weekdays or treat weekdays and weekends equally?",
+            "choices": [
                 "Emphasis on weekday service",
                 "equal weekday and weekend service"
             ],
@@ -28,8 +29,8 @@
         },
         {
             "id":"1003",
-            "question": "Would you prefer that spacing between stops is closer together for less walking, or wider apart for faster travel speeds?",
-            "answers": [
+            "question_text": "Would you prefer that spacing between stops is closer together for less walking, or wider apart for faster travel speeds?",
+            "choices": [
                 "Close stop spacing and easy access",
                 "Wide stop spacing and faster travel speeds"
             ],
@@ -41,8 +42,8 @@
         },
         {
             "id":"1004",
-            "question": "More direct routing or more frequent service that requires changing buses?",
-            "answers": [
+            "question_text": "More direct routing or more frequent service that requires changing buses?",
+            "choices": [
                 "Direct service that runs infrequently",
                 "Frequent service that requires a transfer"
             ],
@@ -54,8 +55,8 @@
         },
         {
             "id":"1005",
-            "question": "Place the cost of transit on the riders or everyone in the county?",
-            "answers": [
+            "question_text": "Place the cost of transit on the riders or everyone in the county?",
+            "choices": [
                 "Low fares",
                 "Low farebox/high public subsidy"
             ],
@@ -67,8 +68,8 @@
         },
         {
             "id":"1006",
-            "question": "Short walk, long wait, or long walk, short wait?",
-            "answers": [
+            "question_text": "Short walk, long wait, or long walk, short wait?",
+            "choices": [
                 "Short walk to infrequent transit",
                 "Longer walk to frequent transit"
             ],
@@ -80,8 +81,8 @@
         },
         {
             "id":"1007",
-            "question": "Widen clockwise coverage at the expense of midday service?",
-            "answers": [
+            "question_text": "Widen clockwise coverage at the expense of midday service?",
+            "choices": [
                 "Expand early morning/late night service hours",
                 "More peak and midday service"
             ],
@@ -95,13 +96,13 @@
     "demographics": [
         {
             "id":"2001",
-            "question": "zipcode",
+            "question_text": "zipcode",
             "type": "zip"
         },
         {
             "id":"2002",
-            "question": "income",
-            "answers": [
+            "question_text": "income",
+            "choices": [
                 "Under $15,000",
                 "$15,000 to $24,999",
                 "$25,000 to $34,999",
@@ -115,8 +116,8 @@
         },
         {
             "id":"2003",
-            "question": "age",
-            "answers": [
+            "question_text": "age",
+            "choices": [
                 "13 and under",
                 "14 to 17",
                 "18 to 24",
@@ -130,8 +131,8 @@
         },
         {
             "id":"2004",
-            "question": "What is your primary mode of transportation?",
-            "answers": [
+            "question_text": "What is your primary mode of transportation?",
+            "choices": [
                 "Driving solo",
                 "Car Pooling",
                 "Transit",

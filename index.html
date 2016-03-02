@@ -3,7 +3,6 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Quiz</title>
 
@@ -11,218 +10,287 @@
 
 
 
+
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.css" type="text/css">
     <link rel="stylesheet" href="tradeoffs.css">
 
     <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.js"></script>
     <script>
-        (function(W){
-    "use strict";
-    var QuestionDefinitions=[];
-    var answer_index=0;
-    var question_index=0;
-    var questions_wrapper=null;
-    var results_wrapper=null;
-    var main_form;
 
-    function setOrPush(target, val) {
-        var result = val;
-        if (target) {
-            result = [target];
-            result.push(val);
+        (function(W) {
+        "use strict";
+
+        var SURVEY_API = 'http://localhost:8000/api/v1/';
+
+        var input_types = {
+            '0': 'text',
+            '1': 'checkbox',
+            '2': 'radio',
+            '3': 'range',
+            '4': 'dropdown',
+            '5': 'zipcode',
+            '6': 'email'
+        };
+
+        var survey_id = -1;
+        var QuestionDefinitions = [];
+        var answer_index = 0;
+        var question_index = 0;
+        var questions_wrapper = null;
+        var results_wrapper = null;
+        var main_form;
+
+        function setOrPush(target, val) {
+            var result = val;
+            if (target) {
+                result = [target];
+                result.push(val);
+            }
+            return result;
         }
-        return result;
-    }
 
-    function getFormResults(formElement) {
-        var formElements = formElement.elements;
-        var formParams = {};
-        var i=0;
-        var elem = null;
-        for (i=0; i < formElements.length; i+=1) {
-            elem = formElements[i];
-            W.console.log(elem, elem.type);
-            switch (elem.type) {
-            case 'submit':
-                break;
-            case 'radio':
-                if (elem.checked){
-                    formParams[elem.name] = elem.value;
+        function getFormResults(formElement) {
+            var formElements = formElement.elements;
+            var formParams = {};
+            var i = 0;
+            var elem = null;
+            for (i = 0; i < formElements.length; i += 1) {
+                elem = formElements[i];
+                W.console.log(elem, elem.type);
+                switch (elem.type) {
+                    case 'submit':
+                        break;
+                    case 'radio':
+                        if (elem.checked) {
+                            formParams[elem.name] = elem.value;
+                        }
+                        break;
+                    case 'checkbox':
+                        if (elem.checked) {
+                            formParams[elem.name] = setOrPush(formParams[elem.name], elem.value);
+                        }
+                        break;
+                    default:
+                        formParams[elem.name] = setOrPush(formParams[elem.name], elem.value);
                 }
-                break;
-            case 'checkbox':
-                if (elem.checked) {
-                    formParams[elem.name] = setOrPush(formParams[elem.name], elem.value);
-                }
-                break;
-            default:
-                formParams[elem.name] = setOrPush(formParams[elem.name], elem.value);
+            }
+            return formParams;
+        }
+
+        function done(user_answers) {
+            var user_data = JSON.stringify(user_answers, null, ' ');
+            $(results_wrapper).empty().append('sending data to server: ' + user_data)
+
+            $.post(SURVEY_API + 'response/' + survey_id, user_data)
+                .done(function(data) {
+                    window.console.log('received data back from server', data);
+                    $(results_wrapper).append('received data from server: ' + data);
+                });
+        }
+
+        function ok() {
+            var postData = getFormResults(main_form);
+
+            W.console.log(postData);
+
+            if (main_form.checkValidity()) {
+                done(postData);
             }
         }
-        return formParams;
-    }
 
-    function done(user_answers){
-        results_wrapper.innerHTML = JSON.stringify(user_answers, null, ' ');
-    }
+        function addRadioQuestion(o) {
+            var question = o.question_text;
+            var answers = o.choices;
+            if (answers.length < 2) {
+                W.console.warn('Malformed question: need at least two answers to a "radio" question.', o);
+                return;
+            }
+            var $frag = $(document.createDocumentFragment());
+            var $q_wrapper = $('<div class="question radio"/>');
 
-    function ok(){
-        var postData=getFormResults(main_form);
+            $('<p>').text(question).appendTo($frag);
 
-        W.console.log(postData);
+            answers.forEach(function(ans) {
+                $('<input type="radio"/>').attr({
+                    id: 'a_' + answer_index,
+                    name: 'q_' + question_index,
+                    required: 'true',
+                    value: ans['choice_text']
+                }).appendTo($q_wrapper);
 
-        if (main_form.checkValidity()){
-            done(postData);
+                $('<label/>').attr({
+                    for: 'a_' + answer_index
+                }).text(ans['choice_text']).appendTo($q_wrapper);
+
+                answer_index += 1;
+            });
+
+            question_index += 1;
+            $frag.append($q_wrapper);
+            $frag.appendTo(questions_wrapper);
         }
-    }
 
-    function addRadioQuestion(o) {
-        var question = o.question;
-        var answers = o.answers;
-        if (answers.length < 2){
-            W.console.warn('Malformed question: need at least two answers to a "radio" question.', o);
-            return;
-        }
-        var $frag = $(document.createDocumentFragment());
-        var $q_wrapper = $('<div class="question radio"/>');
-
-        $('<p>').text(question).appendTo($frag);
-
-        answers.forEach(function(ans){
-            $('<input type="radio"/>').attr({
-                id:'a_'+answer_index,
-                name: 'q_'+question_index,
-                required : 'true',
-                value: ans
-            }).appendTo($q_wrapper);
+        function addDropdownQuestion(o) {
+            var question = o.question_text;
+            var answers = o.choices;
+            if (answers.length < 2) {
+                W.console.warn('Malformed question: need at least two answers to a "dropdown" question.', o);
+                return;
+            }
+            var $frag = $(document.createDocumentFragment());
+            var $q_wrapper = $('<div class="question dropdown"/>');
 
             $('<label/>').attr({
-                for:'a_'+answer_index
-            }).text(ans).appendTo($q_wrapper);
+                for: 'a_' + answer_index
+            }).text(question).appendTo($q_wrapper);
 
-            answer_index+=1;
-        });
+           var $select = $('<select/>').attr({
+               name: 'q_' + question_index
+           }).appendTo($q_wrapper);
 
-        question_index+=1;
-        $frag.append($q_wrapper);
-        $frag.appendTo(questions_wrapper);
-    }
+            answers.forEach(function(ans) {
+                $('<option/>').attr({
+                    value: ans['choice_text']
+                }).text(ans['choice_text']).appendTo($select);
 
-    function addCheckboxQuestion(o) {
-        var qid = o.id;
-        var question = o.question;
-        var answers = o.answers;
-        if (answers.length < 0){
-            W.console.warn('Malformed question: need at least one answer to a "checkbox" question.', o);
-            return;
+                answer_index += 1;
+            });
+
+            question_index += 1;
+            $frag.append($q_wrapper);
+            $frag.appendTo(questions_wrapper);
         }
 
-        var $frag = $(document.createDocumentFragment());
-        var $q_wrapper = $('<div class="question checkbox"/>');
+        function addCheckboxQuestion(o) {
+            var qid = o.id;
+            var question = o.question_text;
+            var answers = o.choices;
+            if (answers.length < 0) {
+                W.console.warn('Malformed question: need at least one answer to a "checkbox" question.', o);
+                return;
+            }
 
-        $('<p>').text(question).appendTo($frag);
+            var $frag = $(document.createDocumentFragment());
+            var $q_wrapper = $('<div class="question checkbox"/>');
 
-        answers.forEach(function(ans){
-            $('<input type="checkbox"/>').attr({
-                id:'a_'+answer_index,
+            $('<p>').text(question).appendTo($frag);
+
+            answers.forEach(function(ans) {
+                $('<input type="checkbox"/>').attr({
+                    id: 'a_' + answer_index,
+                    name: qid,
+                    value: ans['choice_text']
+                }).appendTo($q_wrapper);
+
+                $('<label/>').attr({
+                    for: 'a_' + answer_index
+                }).text(ans['choice_text']).appendTo($q_wrapper);
+
+                answer_index += 1;
+            });
+            question_index += 1;
+
+            $frag.append($q_wrapper);
+            $frag.appendTo(questions_wrapper);
+        }
+
+        function addRangeQuestion(o) {
+            var qid = o.id;
+            var question = o.question_text;
+            var answers = o.choices;
+            var input_vals = {
+                'min': o.scale[0],
+                'max': o.scale[1],
+                'step': 1
+            };
+
+            if (answers.length !== 2) {
+                W.console.warn('Malformed question: need two and only two answers for a "range" question.', o);
+                return;
+            }
+
+            var $frag = $(document.createDocumentFragment());
+            var $q_wrapper = $('<div class="question range"/>');
+
+            $('<label>').attr({
+                for: 'a_' + answer_index
+            }).text(question).appendTo($q_wrapper);
+
+            var $left_option = $('<div>').addClass('left').text(answers[0]).appendTo($q_wrapper);
+
+            var $right_option = $('<div>').addClass('right').text(answers[1]);
+
+            var dl_id = 'q_' + question_index + '_dl';
+            $('<input type="range"/>').attr({
+                id: 'a_' + answer_index,
                 name: qid,
-                value: ans
+                required: true,
+                list: dl_id,
+                min: input_vals.min,
+                max: input_vals.max,
+                step: input_vals.step,
+                value: input_vals.min + (input_vals.max - input_vals.min)/2
             }).appendTo($q_wrapper);
 
-            $('<label/>').attr({
-                for:'a_'+answer_index
-            }).text(ans).appendTo($q_wrapper);
-
-            answer_index+=1;
-        });
-        question_index+=1;
-
-        $frag.append($q_wrapper);
-        $frag.appendTo(questions_wrapper);
-    }
-
-    function addRangeQuestion(o) {
-        var qid = o.id;
-        var question = o.question;
-        var answers = o.answers;
-        var input_vals = {'min':o.scale[0],'max':o.scale[1],'step':1};
-
-        if (answers.length !== 2){
-            W.console.warn('Malformed question: need two and only two answers for a "range" question.', o);
-            return;
-        }
-
-        var $frag = $(document.createDocumentFragment());
-        var $q_wrapper = $('<div class="question range"/>');
-
-        $('<label>').attr({
-            for:'a_'+answer_index
-        }).text(question).appendTo($q_wrapper);
-
-
-
-
-        var $left_option = $('<div>').addClass('left').text(answers[0]).appendTo($q_wrapper);
-
-        var $right_option = $('<div>').addClass('left').text(answers[1]);
-
-        var dl_id = 'q_'+question_index+'_dl';
-
-        var $r_input = $('<input type="range"/>').attr({
-            id:'a_'+answer_index,
-            name: qid,
-            required:true,
-            list:dl_id,
-            min:input_vals.min,
-            max:input_vals.max,
-            step:input_vals.step
-        }).appendTo($q_wrapper);
-
-
-        var $dl = $('<datalist/>').attr({ id: dl_id}).appendTo($q_wrapper);
-        for (var i = input_vals.min; i <= input_vals.max; i=i + input_vals.step){
-            $('<option/>').attr({
-                value : i
-            }).appendTo($dl);
-        }
-
-        $right_option.appendTo($q_wrapper);
-
-        answer_index+=1;
-        question_index+=1;
-
-        $frag.append($q_wrapper);
-        $frag.appendTo(questions_wrapper);
-    }
-
-    function set(response){
-        QuestionDefinitions=response['survey'];
-        QuestionDefinitions.forEach(function(e) {
-            if (e.type === "radio"){
-                addRadioQuestion(e);
-            } else if(e.type === "range"){
-                addRangeQuestion(e);
-            } else if(e.type === "checkbox"){
-                addCheckboxQuestion(e);
+            var $dl = $('<datalist/>').attr({
+                id: dl_id
+            }).appendTo($q_wrapper);
+            for (var i = input_vals.min; i <= input_vals.max; i = i + input_vals.step) {
+                $('<option/>').attr({
+                    value: i
+                }).appendTo($dl);
             }
-        });
-    }
 
-    function init(){
-        questions_wrapper=document.getElementById('questions_wrapper');
-        results_wrapper= document.getElementById('results_wrapper');
-        main_form = document.getElementById('main_form');
-        main_form.addEventListener('submit',function(event){
-            event.preventDefault();
-            ok();
-            },false);
+            $right_option.appendTo($q_wrapper);
 
-        $.ajax({
-            url: "questions.json"
-        }).done(set);
+            answer_index += 1;
+            question_index += 1;
 
-    }
-    W.addEventListener('load',init,false);
-})(window);
+            $frag.append($q_wrapper);
+            $frag.appendTo(questions_wrapper);
+        }
+
+        function set(response) {
+            QuestionDefinitions = response['questions'];
+            survey_id = response['id'];
+            QuestionDefinitions.forEach(function(e) {
+                // var type = input_types[e.type];
+                var type = e.type;
+                if (type === "radio") {
+                    addRadioQuestion(e);
+                } else if (type === "range") {
+                    addRangeQuestion(e);
+                } else if (type === "checkbox") {
+                    addCheckboxQuestion(e);
+                } else if (type === "dropdown") {
+                    addDropdownQuestion(e);
+                }
+            });
+            // init rangeslider polyfill
+            $('input[type="range"]').rangeslider({
+                polyfill: false
+            });
+        }
+
+        function init() {
+            document.addEventListener("touchstart", function(){}, true);
+            questions_wrapper = document.getElementById('questions_wrapper');
+            results_wrapper = document.getElementById('results_wrapper');
+            main_form = document.getElementById('main_form');
+            main_form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                ok();
+            }, false);
+
+            $.ajax({
+                // url: SURVEY_API + "survey/1/"
+                url: 'questions.json'
+            }).done(set);
+
+        }
+        W.addEventListener('load', init, false);
+    })(window);
     </script>
 </head>
 
