@@ -8,298 +8,344 @@
 
     <link rel="stylesheet" href="/squarespace-css/normalize.css" type="text/css">
 
-
-
-
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.css" type="text/css">
     <link rel="stylesheet" href="tradeoffs.css">
 
     <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.js"></script>
+    <!--<script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>-->
+    <script src="Chart.min.js"></script>
+
     <script>
 
-        (function(W) {
-        "use strict";
+    var VTA = VTA || {};
 
-        var SURVEY_API = 'http://localhost:8000/api/v1/';
+    VTA.Survey = function(w){
+        // var SURVEY_API = 'https://young-sea-59324.herokuapp.com/survey';
+        this.SURVEY_API = 'http://localhost:5000/survey';
 
-        var input_types = {
-            '0': 'text',
-            '1': 'checkbox',
-            '2': 'radio',
-            '3': 'range',
-            '4': 'dropdown',
-            '5': 'zipcode',
-            '6': 'email'
-        };
+        this.W = w;
+        this.survey_id = 2;
+        this.QuestionDefinitions = [];
+        this.user_response = [];
+        this.answer_index = 0;
+        this.question_index = 0;
+        this.questions_wrapper = null;
+        this.results_wrapper = null;
+        this.$main_form;
+    };
 
-        var survey_id = -1;
-        var QuestionDefinitions = [];
-        var answer_index = 0;
-        var question_index = 0;
-        var questions_wrapper = null;
-        var results_wrapper = null;
-        var main_form;
+    VTA.Survey.prototype.init = function() {
+        var self = this;
 
-        function setOrPush(target, val) {
-            var result = val;
-            if (target) {
-                result = [target];
-                result.push(val);
-            }
-            return result;
-        }
+        this.questions_wrapper = $('#questions_wrapper');
+        this.results_wrapper = $('#results_wrapper');
+        this.$main_form = $('#main_form');
+        this.$main_form.on('submit', function(event) {
+            event.preventDefault();
+            self.ok();
+        });
 
-        function getFormResults(formElement) {
-            var formElements = formElement.elements;
-            var formParams = {};
-            var i = 0;
-            var elem = null;
-            for (i = 0; i < formElements.length; i += 1) {
-                elem = formElements[i];
-                W.console.log(elem, elem.type);
-                switch (elem.type) {
-                    case 'submit':
-                        break;
-                    case 'radio':
-                        if (elem.checked) {
-                            formParams[elem.name] = elem.value;
-                        }
-                        break;
-                    case 'checkbox':
-                        if (elem.checked) {
-                            formParams[elem.name] = setOrPush(formParams[elem.name], elem.value);
-                        }
-                        break;
-                    default:
-                        formParams[elem.name] = setOrPush(formParams[elem.name], elem.value);
-                }
-            }
-            return formParams;
-        }
-
-        function done(user_answers) {
-            var user_data = JSON.stringify(user_answers, null, ' ');
-            $(results_wrapper).empty().append('sending data to server: ' + user_data)
-
-            $.post(SURVEY_API + 'response/' + survey_id, user_data)
-                .done(function(data) {
-                    window.console.log('received data back from server', data);
-                    $(results_wrapper).append('received data from server: ' + data);
-                });
-        }
-
-        function ok() {
-            var postData = getFormResults(main_form);
-
-            W.console.log(postData);
-
-            if (main_form.checkValidity()) {
-                done(postData);
-            }
-        }
-
-        function addRadioQuestion(o) {
-            var question = o.question_text;
-            var answers = o.choices;
-            if (answers.length < 2) {
-                W.console.warn('Malformed question: need at least two answers to a "radio" question.', o);
-                return;
-            }
-            var $frag = $(document.createDocumentFragment());
-            var $q_wrapper = $('<div class="question radio"/>');
-
-            $('<p>').text(question).appendTo($frag);
-
-            answers.forEach(function(ans) {
-                $('<input type="radio"/>').attr({
-                    id: 'a_' + answer_index,
-                    name: 'q_' + question_index,
-                    required: 'true',
-                    value: ans['choice_text']
-                }).appendTo($q_wrapper);
-
-                $('<label/>').attr({
-                    for: 'a_' + answer_index
-                }).text(ans['choice_text']).appendTo($q_wrapper);
-
-                answer_index += 1;
-            });
-
-            question_index += 1;
-            $frag.append($q_wrapper);
-            $frag.appendTo(questions_wrapper);
-        }
-
-        function addDropdownQuestion(o) {
-            var question = o.question_text;
-            var answers = o.choices;
-            if (answers.length < 2) {
-                W.console.warn('Malformed question: need at least two answers to a "dropdown" question.', o);
-                return;
-            }
-            var $frag = $(document.createDocumentFragment());
-            var $q_wrapper = $('<div class="question dropdown"/>');
-
-            $('<label/>').attr({
-                for: 'a_' + answer_index
-            }).text(question).appendTo($q_wrapper);
-
-           var $select = $('<select/>').attr({
-               name: 'q_' + question_index
-           }).appendTo($q_wrapper);
-
-            answers.forEach(function(ans) {
-                $('<option/>').attr({
-                    value: ans['choice_text']
-                }).text(ans['choice_text']).appendTo($select);
-
-                answer_index += 1;
-            });
-
-            question_index += 1;
-            $frag.append($q_wrapper);
-            $frag.appendTo(questions_wrapper);
-        }
-
-        function addCheckboxQuestion(o) {
-            var qid = o.id;
-            var question = o.question_text;
-            var answers = o.choices;
-            if (answers.length < 0) {
-                W.console.warn('Malformed question: need at least one answer to a "checkbox" question.', o);
-                return;
-            }
-
-            var $frag = $(document.createDocumentFragment());
-            var $q_wrapper = $('<div class="question checkbox"/>');
-
-            $('<p>').text(question).appendTo($frag);
-
-            answers.forEach(function(ans) {
-                $('<input type="checkbox"/>').attr({
-                    id: 'a_' + answer_index,
-                    name: qid,
-                    value: ans['choice_text']
-                }).appendTo($q_wrapper);
-
-                $('<label/>').attr({
-                    for: 'a_' + answer_index
-                }).text(ans['choice_text']).appendTo($q_wrapper);
-
-                answer_index += 1;
-            });
-            question_index += 1;
-
-            $frag.append($q_wrapper);
-            $frag.appendTo(questions_wrapper);
-        }
-
-        function addRangeQuestion(o) {
-            var qid = o.id;
-            var question = o.question_text;
-            var answers = o.choices;
-            var input_vals = {
-                'min': o.scale[0],
-                'max': o.scale[1],
-                'step': 1
-            };
-
-            if (answers.length !== 2) {
-                W.console.warn('Malformed question: need two and only two answers for a "range" question.', o);
-                return;
-            }
-
-            var $frag = $(document.createDocumentFragment());
-            var $q_wrapper = $('<div class="question range"/>');
-
-            $('<label>').attr({
-                for: 'a_' + answer_index
-            }).text(question).appendTo($q_wrapper);
-
-            var $left_option = $('<div>').addClass('left').text(answers[0]).appendTo($q_wrapper);
-
-            var $right_option = $('<div>').addClass('right').text(answers[1]);
-
-            var dl_id = 'q_' + question_index + '_dl';
-            $('<input type="range"/>').attr({
-                id: 'a_' + answer_index,
-                name: qid,
-                required: true,
-                list: dl_id,
-                min: input_vals.min,
-                max: input_vals.max,
-                step: input_vals.step,
-                value: input_vals.min + (input_vals.max - input_vals.min)/2
-            }).appendTo($q_wrapper);
-
-            var $dl = $('<datalist/>').attr({
-                id: dl_id
-            }).appendTo($q_wrapper);
-            for (var i = input_vals.min; i <= input_vals.max; i = i + input_vals.step) {
-                $('<option/>').attr({
-                    value: i
-                }).appendTo($dl);
-            }
-
-            $right_option.appendTo($q_wrapper);
-
-            answer_index += 1;
-            question_index += 1;
-
-            $frag.append($q_wrapper);
-            $frag.appendTo(questions_wrapper);
-        }
-
-        function set(response) {
+        $.ajax({
+            url: this.SURVEY_API + "/surveys/"+this.survey_id+"/"
+        }).done(function(response) {
             QuestionDefinitions = response['questions'];
-            survey_id = response['id'];
             QuestionDefinitions.forEach(function(e) {
                 // var type = input_types[e.type];
                 var type = e.type;
                 if (type === "radio") {
-                    addRadioQuestion(e);
+                    self.addRadioQuestion(e);
                 } else if (type === "range") {
-                    addRangeQuestion(e);
+                    self.addRangeQuestion(e);
                 } else if (type === "checkbox") {
-                    addCheckboxQuestion(e);
+                    self.addCheckboxQuestion(e);
                 } else if (type === "dropdown") {
-                    addDropdownQuestion(e);
+                    self.addDropdownQuestion(e);
                 }
             });
             // init rangeslider polyfill
             $('input[type="range"]').rangeslider({
                 polyfill: false
             });
+        });
+    };
+
+    VTA.Survey.prototype.getFormResults = function (formElement) {
+        var formElements = formElement[0].elements;
+        user_response = [];
+        var i = 0;
+        var elem = null;
+        for (i = 0; i < formElements.length; i += 1) {
+            elem = formElements[i];
+            this.W.console.log(elem, elem.type);
+            switch (elem.type) {
+                case 'submit':
+                    break;
+                case 'radio':
+                    if (elem.checked) {
+                        user_response.push({ "question": elem.name, "answer": elem.id, "other_answer_numeric": elem.value});
+                    }
+                    break;
+                case 'checkbox':
+                    if (elem.checked) {
+                        user_response.push({ "question": elem.name, "answer": elem.id, "other_answer_numeric": elem.value});
+                    }
+                    break;
+                default:
+                    user_response.push({ "question": elem.name, "answer": elem.id, "other_answer_numeric": elem.value});
+            }
+        }
+        return user_response;
+    };
+
+    VTA.Survey.prototype.done = function (user_answers) {
+        var user_data = JSON.stringify(user_answers, null, ' ');
+        //$(results_wrapper).empty().append('sending data to server: ' + user_data)
+
+        $.post(this.SURVEY_API + '/responses/', user_data)
+            .done(function(data) {
+                window.console.log('received data back from server', data);
+                // $(results_wrapper).append('received data from server: ' + data);
+            });
+
+        $.get(this.SURVEY_API + '/responses/'+this.survey_id+'/?output=average', user_data)
+            .done(function(data) {
+
+                var u_answers = [];
+                var u_data = JSON.parse(user_data);
+                u_data.forEach(function(ud){
+                    u_answers.push(ud['other_answer_numeric']);
+                });
+
+                var chart_data = {
+                    labels: Object.keys(data),
+                    datasets: [
+                        {
+                            label: "Average response",
+                            fillColor: "rgba(220,220,220,0.5)",
+                            strokeColor: "rgba(220,220,220,0.8)",
+                            highlightFill: "rgba(220,220,220,0.75)",
+                            highlightStroke: "rgba(220,220,220,1)",
+                            data: Object.keys(data).map(function(key){ return data[key]; })
+                        },
+                        {
+                            label: "Your response",
+                            fillColor: "rgba(151,187,205,0.5)",
+                            strokeColor: "rgba(151,187,205,0.8)",
+                            highlightFill: "rgba(151,187,205,0.75)",
+                            highlightStroke: "rgba(151,187,205,1)",
+                            data: u_answers
+                        }
+                    ]
+                };
+                var chart_options = {
+                    scaleOverride : true,
+                    scaleSteps : 1,
+                    scaleStepWidth : 5,
+                    scaleStartValue : 0,
+                    barValueSpacing : 5
+                };
+                var ctx = document.getElementById("survey_results_canvas").getContext("2d");
+                var resultsChart = new Chart(ctx).HorizontalBar(chart_data, chart_options);
+            });
+        };
+
+    VTA.Survey.prototype.ok = function() {
+        var postData = this.getFormResults(this.$main_form);
+
+        this.W.console.log(postData);
+
+        if (this.$main_form[0].checkValidity()) {
+            this.done(postData);
+        }
+    };
+
+    VTA.Survey.prototype.addRadioQuestion = function (o) {
+        var question = o.question_text;
+        var answers = o.choices;
+        if (answers.length < 2) {
+            W.console.warn('Malformed question: need at least two answers to a "radio" question.', o);
+            return;
+        }
+        var $frag = $(document.createDocumentFragment());
+        var $q_wrapper = $('<li class="question radio"/>');
+
+        $('<p>').text(question).appendTo($frag);
+
+        answers.forEach(function(ans) {
+            $('<input type="radio"/>').attr({
+                id: 'a_' + answer_index,
+                name: 'q_' + question_index,
+                required: 'true',
+                value: ans['choice_text']
+            }).appendTo($q_wrapper);
+
+            $('<label/>').attr({
+                for: 'a_' + answer_index
+            }).text(ans['choice_text']).appendTo($q_wrapper);
+
+            answer_index += 1;
+        });
+
+        question_index += 1;
+        $frag.append($q_wrapper);
+        $frag.appendTo(questions_wrapper);
+    };
+
+    VTA.Survey.prototype.addDropdownQuestion = function (o) {
+        var qid = o.pk;
+        var question = o.title;
+        var answers = o.answers;
+        if (answers.length < 2) {
+            W.console.warn('Malformed question: need at least two answers to a "dropdown" question.', o);
+            return;
+        }
+        var $frag = $(document.createDocumentFragment());
+        var $q_wrapper = $('<li class="question dropdown"/>');
+
+        $('<label/>').attr({
+            for: 'a_' + answer_index
+        }).text(question).appendTo($q_wrapper);
+
+        var $select = $('<select/>').attr({
+            name: qid
+        }).appendTo($q_wrapper);
+
+        answers.forEach(function(ans) {
+            $('<option/>').attr({
+                value: ans['choice_text']
+            }).text(ans['choice_text']).appendTo($select);
+
+            answer_index += 1;
+        });
+
+        question_index += 1;
+        $frag.append($q_wrapper);
+        $frag.appendTo(questions_wrapper);
+    };
+
+    VTA.Survey.prototype.addCheckboxQuestion = function(o) {
+        var qid = o.pk;
+        var question = o.title;
+        var answers = o.answers;
+        if (answers.length < 0) {
+            W.console.warn('Malformed question: need at least one answer to a "checkbox" question.', o);
+            return;
         }
 
-        function init() {
-            document.addEventListener("touchstart", function(){}, true);
-            questions_wrapper = document.getElementById('questions_wrapper');
-            results_wrapper = document.getElementById('results_wrapper');
-            main_form = document.getElementById('main_form');
-            main_form.addEventListener('submit', function(event) {
-                event.preventDefault();
-                ok();
-            }, false);
+        var $frag = $(document.createDocumentFragment());
+        var $q_wrapper = $('<li class="question checkbox"/>');
 
-            $.ajax({
-                // url: SURVEY_API + "survey/1/"
-                url: 'questions.json'
-            }).done(set);
+        $('<p>').text(question).appendTo($frag);
 
+        answers.forEach(function(ans) {
+            $('<input type="checkbox"/>').attr({
+                id: ans.pk,
+                name: qid,
+                value: ans['choice_text']
+            }).appendTo(this.$q_wrapper);
+
+            $('<label/>').attr({
+                for: 'a_' + this.answer_index
+            }).text(ans['choice_text']).appendTo($q_wrapper);
+
+            this.answer_index += 1;
+        });
+        question_index += 1;
+
+        $frag.append($q_wrapper);
+        $frag.appendTo(questions_wrapper);
+    };
+
+    VTA.Survey.prototype.addRangeQuestion = function(o) {
+        var qid = o.pk;
+        var question = o.title;
+        var answers = o.answers;
+        var input_vals = {
+            'min': o.scale_min,
+            'max': o.scale_max,
+            'step': 1
+        };
+
+        if (answers.length !== 2) {
+            W.console.warn('Malformed question: need two and only two answers for a "range" question.', o);
+            return;
         }
-        W.addEventListener('load', init, false);
-    })(window);
+
+        var $frag = $(document.createDocumentFragment());
+
+        var $q_wrapper = $('<li class="question range q'+ this.question_index+'"/>');
+
+        $('<span class="question_index">').text(this.question_index+1).appendTo($q_wrapper);
+
+        $('<label>').attr({
+            for: 'a_' + this.answer_index
+        }).text(question).appendTo(this.$q_wrapper);
+
+        var $input_wrapper = $('<div class="input_wrapper"/>').appendTo($q_wrapper);
+
+        var $left_option = $('<div>').addClass('left').text(answers[0].title);
+        var $right_option = $('<div>').addClass('right').text(answers[1].title);
+        if (this.question_index === 0){   // FIXME once styles are known
+            $left_option.appendTo($input_wrapper);
+        }
+
+        var dl_id = 'q_' + this.question_index + '_dl';
+        $('<input type="range"/>').attr({
+            id: answers[0].pk,
+            name: qid,
+            required: true,
+            list: dl_id,
+            min: input_vals.min,
+            max: input_vals.max,
+            step: input_vals.step,
+            value: input_vals.min + (input_vals.max - input_vals.min)/2
+        }).appendTo($input_wrapper);
+
+        var $dl = $('<datalist/>').attr({
+            id: dl_id
+        }).appendTo($input_wrapper);
+        for (var i = input_vals.min; i <= input_vals.max; i = i + input_vals.step) {
+            $('<option/>').attr({
+                value: i
+            }).appendTo($dl);
+        }
+        if (this.question_index !== 0){   // FIXME once styles are known
+            $left_option.appendTo($input_wrapper);
+        }
+        $right_option.appendTo($input_wrapper);
+
+        this.answer_index += 1;
+        this.question_index += 1;
+
+        $frag.append($q_wrapper);
+        $frag.appendTo(this.questions_wrapper);
+    };
+
+
+
+
+    var vta_survey = null;
+    (function() {
+        "use strict";
+        document.addEventListener("touchstart", function(){}, true);
+        window.addEventListener('load', function(){
+            vta_survey = new VTA.Survey(window);
+            vta_survey.init();
+        }, false);
+    })();
+
     </script>
 </head>
 
 <body>
     <form id="main_form">
-        <div id="questions_wrapper"></div>
+        <ol id="questions_wrapper"></ol>
         <button id="btn" type="submit">Submit answers and view results</button>
     </form>
-    <div id="results_wrapper"></div>
+    <div id="results_wrapper">
+        <canvas id="survey_results_canvas" width="400" height="400"></canvas>
+    </div>
 
 </body>
 
