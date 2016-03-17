@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Quiz</title>
+
+    <link rel="stylesheet" href="/squarespace-css/normalize.css" type="text/css">
+
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.css" type="text/css">
+    <link rel="stylesheet" href="tradeoffs.css">
+
+    <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.js"></script>
+    <!--<script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>-->
+    <script src="Chart.min.js"></script>
+
+    <script>
+    var domg = function(data, elem) {
+      this.$elem = $(elem);
+      this.data = data;
+
+      var self = this;
+      $.each(data, function(i, item) {
+        self.addBar(item['name'], item['labels'], item['values']);
+      });
+
+      setTimeout(function() {
+        self.fill();
+      }, 500);
+    };
+
+    domg.prototype.addBar = function(name, labels, values) {
+      var bar_wrapper = $('<div/>').addClass('horiz-bar-wrapper');
+      
+
+      var bar = $('<div/>')
+        .addClass('horiz-bar')
+        .data('name', name)
+        .appendTo(bar_wrapper);
+
+      var sub_label = 'bar_' + values.length;
+
+      $.each(values, function(j, val) {
+        var label = $('<span/>').text(val['label']);
+
+        var fill = $('<div/>')
+          .addClass('bar-fill')
+          .data('value-pct', val['value-pct'])
+          .data('label', val['label']);
+
+        var bar_fill_wrapper = $('<div/>')
+          .addClass('bar-fill-wrapper')
+          .addClass(sub_label)
+          .append(label)
+          .append(fill)
+          .appendTo(bar);
+      });
+
+      var label_l = $('<span/>').addClass('left').text(labels[0]).appendTo(bar_wrapper);
+      var label_r = $('<span/>').addClass('right').text(labels[1]).appendTo(bar_wrapper);
+
+      this.$elem.append(bar_wrapper);
+    };
+
+    domg.prototype.fill = function() {
+      this.$elem.find('.horiz-bar .bar-fill').each(function(index, elem) {
+        var $elem = $(elem);
+        setTimeout(function() {
+          $elem.css('width', parseInt($elem.data('value-pct'), 10) + '%');
+        }, 750);
+      });
+    };
+
+
+
+    var VTA = VTA || {};
+    VTA.user_language = (navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage)).toLowerCase();
+
+    VTA.Survey = VTA.Survey || {};
+
+
+    VTA.Survey.Results = function(){
+        // this.SURVEY_API = 'https://young-sea-59324.herokuapp.com/survey';
+        this.SURVEY_API = 'http://localhost:5000/survey';
+        this.survey_id = 2;
+        this.QuestionDefinitions = null;
+        this.QuesitonTitles = [];
+        this.SurveyAverageValues = null;
+    };
+
+    VTA.Survey.Results.prototype.init = function() {
+        var self = this;
+        this.results_wrapper = $('#results_wrapper');
+
+        // get question definitions
+        $.ajax({
+            url: this.SURVEY_API + "/surveys/"+this.survey_id+"/?language="+VTA.user_language
+        }).done(function(response) {
+            self.QuestionDefinitions = {};
+            response['questions'].forEach(function(e) {
+                self.QuestionDefinitions[e['pk']] = e;
+                self.QuesitonTitles.push(e['title']);
+            });
+            self.show();
+        });
+
+        // get numeric results
+        $.get(this.SURVEY_API + '/responses/'+this.survey_id+'/?output=average')
+            .done(function(data) {
+                self.SurveyAverageValues = data['averages'];
+                self.SurveyResponseCount = data['stats']['count'];
+                self.show();
+            });
+    };
+
+    VTA.Survey.Results.prototype.show = function($elem) {
+        // check if we have everything we need
+        if (this.QuestionDefinitions === null || this.SurveyAverageValues === null){
+            return;
+        }
+
+        var self = this;
+
+
+        /*
+        *  STYLE 1
+        */
+        var chart_data = {
+            labels: this.QuesitonTitles,
+            datasets: [
+                {
+                    label: "Average response",
+                    fillColor: "rgba(220,220,220,0.5)",
+                    strokeColor: "rgba(220,220,220,0.8)",
+                    highlightFill: "rgba(220,220,220,0.75)",
+                    highlightStroke: "rgba(220,220,220,1)",
+                    data: Object.keys(this.SurveyAverageValues).map(function(key){ return self.SurveyAverageValues[key]; })
+                }
+            ]
+        };
+        var chart_options = {
+            scaleOverride : true,
+            scaleSteps : 1,
+            scaleStepWidth : 5,
+            scaleStartValue : 0,
+            barValueSpacing : 5,
+            scaleLabel: "<%=value%>"
+        };
+        var ctx = document.getElementById("survey_results_canvas").getContext("2d");
+        var resultsChart = new Chart(ctx).HorizontalBar(chart_data, chart_options);
+
+
+
+
+        /*
+        *  STYLE 2
+        */
+        var domg_data = []
+        Object.keys(this.SurveyAverageValues).map(function(key){
+            domg_data.push({
+                "name": self.QuestionDefinitions[key].title, 
+                "labels":[
+                    self.QuestionDefinitions[key].answers[0].title,
+                    self.QuestionDefinitions[key].answers[1].title
+                ],
+                "values" : [{
+                    "label": "",
+
+                    "value-pct" : 100*(self.SurveyAverageValues[key]/6)
+                }]
+            }); 
+        });
+        var d = new domg(domg_data, $('#domg')[0]);
+  
+    };
+
+
+    var vta_survey_results = null;
+    (function() {
+        "use strict";
+        document.addEventListener("touchstart", function(){}, true);
+        window.addEventListener('load', function(){
+            vta_survey_results = new VTA.Survey.Results();
+            vta_survey_results.init();
+        }, false);
+    })();
+
+    </script>
+</head>
+
+<body>
+    <ul>
+        <li>
+            <a href="index.html">survey</a>
+        </li>
+        <li>
+            <a href="results.html">results</a>
+        </li>
+    </ul>
+    <div id="results_wrapper">
+        <canvas id="survey_results_canvas" width="1000" height="400"></canvas>
+
+        <div id="domg">
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
