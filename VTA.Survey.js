@@ -26,6 +26,8 @@ VTA.Countdown = {
 };
 
 
+
+
 /*
  * @constructor
  */
@@ -98,10 +100,6 @@ VTA.Survey.Results = function(id, results_elem) {
   this.SurveyAverageValues = null;
   this.results_wrapper = $(results_elem);
 
-  this.$charts_canvas = $('<canvas id="survey_results_canvas"/>').attr({
-    'width': '800px',
-    'height': '500px'
-  }).appendTo(this.results_wrapper);
   this.$domg = $('<div id="domg"/>').appendTo(this.results_wrapper);
 };
 
@@ -123,8 +121,10 @@ VTA.Survey.Results.prototype.init = function() {
   // get numeric results
   $.get(this.SURVEY_API + '/responses/' + this.survey_id + '/?output=average')
     .done(function(data) {
+
       self.SurveyAverageValues = data['averages'];
       self.SurveyResponseCount = data['stats']['count'];
+      window.console.log('Received data from '+self.SurveyResponseCount +' survey responses.');
       self.show();
     });
 };
@@ -137,39 +137,6 @@ VTA.Survey.Results.prototype.show = function($elem) {
 
   var self = this;
 
-
-  /*
-   *  STYLE 1
-   */
-  var chart_data = {
-    labels: this.QuesitonTitles,
-    datasets: [{
-      label: "Average response",
-      fillColor: "rgba(220,220,220,0.5)",
-      strokeColor: "rgba(220,220,220,0.8)",
-      highlightFill: "rgba(220,220,220,0.75)",
-      highlightStroke: "rgba(220,220,220,1)",
-      data: Object.keys(this.SurveyAverageValues).map(function(key) {
-        return self.SurveyAverageValues[key];
-      })
-    }]
-  };
-  var chart_options = {
-    scaleOverride: true,
-    scaleSteps: 1,
-    scaleStepWidth: 5,
-    scaleStartValue: 0,
-    barValueSpacing: 5,
-    scaleLabel: "<%=value%>"
-  };
-  var ctx = this.$charts_canvas[0].getContext("2d");
-  // var resultsChart = new Chart(ctx).HorizontalBar(chart_data, chart_options);
-
-
-
-  /*
-   *  STYLE 2
-   */
   var domg_data = [];
   Object.keys(this.SurveyAverageValues).map(function(key) {
     domg_data.push({
@@ -180,8 +147,7 @@ VTA.Survey.Results.prototype.show = function($elem) {
       ],
       "values": [{
         "label": "",
-
-        "value-pct": 100 * (self.SurveyAverageValues[key] / 6)
+        "value-pct": 100 * ((self.SurveyAverageValues[key]-1) / (self.QuestionDefinitions[key].scale_max-1))
       }]
     });
   });
@@ -191,7 +157,7 @@ VTA.Survey.Results.prototype.show = function($elem) {
 
 
 // FIXME: hack!
-VTA.Survey.NULL_ANSWER_PK = 52;
+VTA.Survey.NULL_ANSWER_PK = 44;
 
 /*
  * @constructor
@@ -267,7 +233,7 @@ VTA.Survey.Controller.prototype.getFormResults = function(formElement) {
   var elem = null;
   for (i = 0; i < formElements.length; i += 1) {
     elem = formElements[i];
-    window.console.log(elem, elem.type);
+    // window.console.log(elem, elem.type);
     if (!elem.name || elem.name.length < 1) continue;
     var survey_id = $(elem).data('survey-id');
     var q = this.QuestionDefinitions[survey_id][elem.name];
@@ -306,7 +272,7 @@ VTA.Survey.Controller.prototype.getFormResults = function(formElement) {
       case 'text':
         user_response[survey_id].push({
           "question": q['pk'],
-          "answer": VTA.Surey.NULL_ANSWER_PK,
+          "answer": VTA.Survey.NULL_ANSWER_PK,
           "other_answer": elem.value
         });
         break;
