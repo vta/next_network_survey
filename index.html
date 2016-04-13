@@ -129,6 +129,9 @@
         </li>
     </ul>
     <form id="main_form">
+        <div id="survey_wrapper"></div>
+        <div id="demographics_wrapper"></div>
+
         <div class="sqs-block-button-container--center">
             <button id="btn" type="submit" class="sqs-block-button-element--small sqs-block-button-element">Submit answers and view results</button>
         </div>
@@ -156,7 +159,11 @@
             "use strict";
             document.addEventListener("touchstart", function(){}, true);
             window.addEventListener('load', function(){
-                vta_survey = new VTA.Survey.Controller([2,1], document.getElementById('main_form'), document.getElementById('results_wrapper'));
+                vta_survey = new VTA.Survey.Controller({
+                    form_elem : document.getElementById('main_form'),
+                    survey_targets : { 2 : {target_elem :'#survey_wrapper'}, 1 : {target_elem:'#demographics_wrapper'}},
+                    results_elem : document.getElementById('results_wrapper')
+                });
                 vta_survey.init();
             }, false);
 

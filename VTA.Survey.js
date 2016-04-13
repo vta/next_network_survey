@@ -3,7 +3,7 @@ VTA.user_language = (navigator.languages ? navigator.languages[0] : (navigator.l
 
 
 VTA.Survey = VTA.Survey || {};
-VTA.Survey.SERVER = ['http://localhost:5000/survey', 'https://young-sea-59324.herokuapp.com/survey'][0];
+VTA.Survey.SERVER = ['http://localhost:5000/survey', 'https://young-sea-59324.herokuapp.com/survey'][1];
 
 
 
@@ -36,6 +36,7 @@ VTA.domg = function(data, elem) {
   this.data = data;
 
   var self = this;
+  this.$elem.empty();
   $.each(data, function(i, item) {
     self.addBar(item['name'], item['labels'], item['values']);
   });
@@ -157,22 +158,33 @@ VTA.Survey.Results.prototype.show = function($elem) {
 
 
 // FIXME: hack!
-VTA.Survey.NULL_ANSWER_PK = 44;
+VTA.Survey.NULL_ANSWER_PK = 38;
 
 /*
  * @constructor
- * @param survey_ids = array[number]
+ * @param s_args = { form_elem : Element, survey_targets : { number|string : string }, results_elem : Element }
  */
-VTA.Survey.Controller = function(survey_ids, form_elem, results_elem) {
-  this.SURVEY_API = VTA.Survey.SERVER;
+VTA.Survey.Controller = function(s_args) {
+  /* s_args might look like this:
+    {
+        form_elem : document.getElementById('main_form'),
+        survey_targets : { 2 : '#survey_wrapper', 1 : '#demographics_wrapper'},
+        results_elem : document.getElementById('results_wrapper')
+    }
+  */
+  var self = this;
 
-  this.survey_ids = survey_ids;
+  this.SURVEY_API = VTA.Survey.SERVER;
+  this.survey_targets = s_args['survey_targets'];
+
+  this.survey_ids = Object.keys(this.survey_targets)
+
   this.QuestionDefinitions = {};
   this.user_response = [];
 
   this.questions_wrapper = null;
-  this.$main_form = $(form_elem);
-  this.results_wrapper = results_elem;
+  this.$main_form = $(s_args['form_elem']);
+  this.results_wrapper = s_args['results_elem'];
   this.survey_sections = [];
 };
 
@@ -190,7 +202,9 @@ VTA.Survey.Controller.prototype.init = function() {
       window.console.log('Invalid survey ID: it must be an integer.');
       continue;
     }
-    var section_elem = $('<ol id=survey_' + this.survey_ids[i] + '/>').addClass('questions_wrapper').prependTo(this.$main_form);
+    
+    var section_elem = $('<ol id=survey_' + this.survey_ids[i] + '/>').addClass('questions_wrapper').appendTo(this.survey_targets[this.survey_ids[i]]['target_elem']);
+    this.survey_targets[this.survey_ids[i]].section_elem = section_elem;
 
     window.console.log('Fetching survey data for lanuage:', VTA.user_language);
     $.ajax({
@@ -212,7 +226,8 @@ VTA.Survey.Controller.prototype.init = function() {
     }).done(function(response) {
       VTA.Countdown.reset();
       var survey_id = response["pk"];
-      self.survey_sections.push(new VTA.Survey.Section(section_elem, survey_id, response['questions']));
+      var elem = self.survey_targets[survey_id].section_elem;
+      self.survey_sections.push(new VTA.Survey.Section(elem, survey_id, response['questions']));
 
       self.QuestionDefinitions[response["pk"]] = {};
       for (var k = 0; k < response['questions'].length; k++) {
@@ -364,17 +379,17 @@ VTA.Survey.Section.prototype.addRadioQuestion = function(o) {
       required: required,
       value: ans['pk'],
       'data-survey-id': self.section_id
-    }).appendTo(self.questions_wrapper);
+    }).appendTo($q_wrapper);
 
     $('<label/>').attr({
-      for: 'a_' + self.answer_index
-    }).text(ans['title']).appendTo(self.questions_wrapper);
+      for: self.answer_index
+    }).text(ans['title']).appendTo($q_wrapper);
 
     self.answer_index += 1;
   });
 
   this.question_index += 1;
-  $frag.append($q_wrapper);
+  $q_wrapper.appendTo($frag);
   $frag.appendTo(this.questions_wrapper);
 };
 
@@ -382,28 +397,45 @@ VTA.Survey.Section.prototype.addTextQuestion = function(o) {
   var qid = o.pk;
   var question = o.title;
   var answers = o.answers;
+  var type = o.type;
 
   var $frag = $(document.createDocumentFragment());
   var $q_wrapper = $('<li class="question text"/>');
 
   $('<label/>').attr({
-    for: 'a_' + this.answer_index
+    for: this.answer_index
   }).text(question).appendTo($q_wrapper);
 
-  var $select = $('<input type="text"/>').attr({
-    name: qid,
-    'data-survey-id': this.section_id
-  }).appendTo($q_wrapper);
+  var $select = null;
+  if (type === 'zipcode'){
+    $select = $('<input type="text"/>').attr({
+      name: qid,
+      type : "number",
+      pattern: "[0-9]*",
+      maxlength : "5",
+      min:"0",
+      'data-survey-id': this.section_id
+    }).appendTo($q_wrapper);
+  } else {
+    $select = $('<input type="text"/>').attr({
+      name: qid,
+      'data-survey-id': this.section_id
+    }).appendTo($q_wrapper);
+  }
+   
 
   this.question_index += 1;
   $frag.append($q_wrapper);
   $frag.appendTo(this.questions_wrapper);
 };
 
+
+
 VTA.Survey.Section.prototype.addDropdownQuestion = function(o) {
   var qid = o.pk;
   var question = o.title;
   var answers = o.answers;
+  var self = this;
   if (answers.length < 2) {
     window.console.warn('Malformed question: need at least two answers to a "dropdown" question.', o);
     return;
@@ -412,7 +444,7 @@ VTA.Survey.Section.prototype.addDropdownQuestion = function(o) {
   var $q_wrapper = $('<li class="question dropdown"/>');
 
   $('<label/>').attr({
-    for: 'a_' + this.answer_index
+    for: this.answer_index
   }).text(question).appendTo($q_wrapper);
 
   var $select = $('<select/>').attr({
@@ -425,7 +457,7 @@ VTA.Survey.Section.prototype.addDropdownQuestion = function(o) {
       value: ans['pk']
     }).text(ans['title']).appendTo($select);
 
-    this.answer_index += 1;
+    self.answer_index += 1;
   });
 
   this.question_index += 1;
@@ -437,6 +469,7 @@ VTA.Survey.Section.prototype.addCheckboxQuestion = function(o) {
   var qid = o.pk;
   var question = o.title;
   var answers = o.answers;
+  var self = this;
   if (answers.length < 0) {
     window.console.warn('Malformed question: need at least one answer to a "checkbox" question.', o);
     return;
@@ -456,10 +489,10 @@ VTA.Survey.Section.prototype.addCheckboxQuestion = function(o) {
     }).appendTo(this.$q_wrapper);
 
     $('<label/>').attr({
-      for: 'a_' + this.answer_index
+      for: self.answer_index
     }).text(ans['choice_text']).appendTo($q_wrapper);
 
-    this.answer_index += 1;
+    self.answer_index += 1;
   });
   this.question_index += 1;
 
@@ -484,7 +517,7 @@ VTA.Survey.Section.prototype.addRangeQuestion = function(o) {
 
   var $frag = $(document.createDocumentFragment());
 
-  var $q_wrapper = $('<li class="question range q' + this.question_index + '"/>');
+  var $q_wrapper = $('<li class="question range"/>');
 
   $('<span class="question_index">').text(this.question_index + 1).appendTo($q_wrapper);
 
@@ -496,9 +529,6 @@ VTA.Survey.Section.prototype.addRangeQuestion = function(o) {
 
   var $left_option = $('<div>').addClass('left').text(answers[0].title);
   var $right_option = $('<div>').addClass('right').text(answers[1].title);
-  if (this.question_index < 2) { // FIXME once styles are known
-    $left_option.appendTo($input_wrapper);
-  }
 
   var dl_id = 'q_' + this.question_index + '_dl';
   $('<input type="range"/>')
@@ -522,9 +552,8 @@ VTA.Survey.Section.prototype.addRangeQuestion = function(o) {
       value: i
     }).appendTo($dl);
   }
-  if (this.question_index >= 2) { // FIXME once styles are known
-    $left_option.appendTo($input_wrapper);
-  }
+  
+  $left_option.appendTo($input_wrapper);
   $right_option.appendTo($input_wrapper);
 
   this.answer_index += 1;

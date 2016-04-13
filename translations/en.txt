@@ -1,0 +1,69 @@
+# American English translation
+
+# Survey Definitions
+0001:Demographics
+0002:Transit Choices Survey
+0003:Thank you for participating in the Transit Choices Survey. Your input is important to us! Designing a transit network involves making tough decisions between good intentions. Your input through this survey will help us understand the community's values as we design our Next Network.
+0004:Directions: Drag each slider to indicate your preference between the two options.
+
+
+# Survey Questions
+1001:More frequent service but starts later and ends earlier
+1002:Less frequent service but starts earlier ends later
+1003:More weekday service but less Saturday and Sunday service
+1004:More Saturday and Sunday service but less weekday service
+1005:Infrequent service with no transfer required
+1006:Frequent service but may require a transfer
+1007:Short walk to infrequent transit
+1008:Longer walk to frequent transit
+1009:Shorter walks to slower routes
+1010:Longer walks to faster routes
+1011:Buses come more often during rush hour
+1012:Buses come more often in the middle of the day
+1013:More service where ridership is higher
+1014:Service everywhere even if ridership is low
+
+
+# Demographic Questions
+2001:ZIP code
+2002:income
+2003:age
+2004:What is your primary mode of transportation?
+
+
+# Answers
+5000:Under $15,000
+5001:$15,000 to $24,999
+5002:$25,000 to $34,999
+5003:$35,000 to $49,999
+5004:$50,000 to $99,999
+5005:$100,000 to $149,999
+5006:$150,000 to $199,999
+5007:$200,000 and above
+5008:13 and under
+5009:14 to 17
+5010:18 to 24
+5011:25 to 34
+5012:35 to 44
+5013:45 to 54
+5014:55 to 64
+5015:65 or older
+5016:Driving solo
+5017:Carpooling
+5018:Transit
+5019:Walking
+5020:Biking
+5021:More frequent service, but ends earlier
+5022:Less frequent service, but ends later
+5023:More weekday service but less Saturday and Sunday service
+5024:More Saturday and Sunday service but less weekday service
+5025:Shorter walks to slower routes
+5026:Longer walks to faster routes
+5027:Infrequent service with no transfers
+5028:Frequent service with transfers
+5029:Short walk to infrequent transit
+5030:Longer walk to frequent transit
+5031:Buses come more often during peak commute periods­
+5032:Buses come more often midday
+5033:More service where ridership is higher
+5034:Service everywhere, even if ridership is low
