@@ -7,16 +7,19 @@
     <title>Quiz</title>
 
     <link rel="stylesheet" href="/squarespace-css/normalize.css" type="text/css">
-
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.css" type="text/css">
-    <!--<link rel="stylesheet" href="rangeslider.min.css" type="text/css">-->
-
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css">
     <link rel="stylesheet" href="tradeoffs.css">
-    
+
     <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
+
+    
     <script src="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.js"></script>
-    <!--<script src="jquery-1.12.0.min.js"></script>
-    <script src="rangeslider.min.js">-->
+
+
     
     <script src="VTA.Survey.js"></script>
 
@@ -128,13 +131,14 @@
             <a href="results.html">results</a>
         </li>
     </ul>
-    <form id="main_form">
-        <div id="survey_wrapper"></div>
-        <div id="demographics_wrapper"></div>
 
-        <div class="sqs-block-button-container--center">
-            <button id="btn" type="submit" class="sqs-block-button-element--small sqs-block-button-element">Submit answers and view results</button>
-        </div>
+    <form id="main_form" >
+      <div id="survey_wrapper"></div>
+      <div id="demographics_wrapper"></div>
+
+      <div class="form-button-wrapper form-button-wrapper--align-left">
+        <button id="btn" type="submit" class="button sqs-system-button sqs-editable-button">Submit answers and view results</button>
+      </div>
     </form>
     <div id="results_wrapper">
     </div>

@@ -36,7 +36,6 @@ VTA.domg = function(data, elem) {
   this.data = data;
 
   var self = this;
-  this.$elem.empty();
   $.each(data, function(i, item) {
     self.addBar(item['name'], item['labels'], item['values']);
   });
@@ -100,6 +99,7 @@ VTA.Survey.Results = function(id, results_elem) {
   this.QuesitonTitles = [];
   this.SurveyAverageValues = null;
   this.results_wrapper = $(results_elem);
+  this.results_wrapper.empty();
 
   this.$domg = $('<div id="domg"/>').appendTo(this.results_wrapper);
 };
@@ -225,6 +225,7 @@ VTA.Survey.Controller.prototype.init = function() {
 
     }).done(function(response) {
       VTA.Countdown.reset();
+      response.questions.sort(function(a,b){ return a.position > b.position;});
       var survey_id = response["pk"];
       var elem = self.survey_targets[survey_id].section_elem;
       self.survey_sections.push(new VTA.Survey.Section(elem, survey_id, response['questions']));
@@ -237,6 +238,12 @@ VTA.Survey.Controller.prototype.init = function() {
       $('input[type="range"]').rangeslider({
         polyfill: false
       });
+
+      $('.selectpicker').selectpicker({
+        style: 'btn-info',
+        size: 4
+      });
+
     });
   }
 };
@@ -382,7 +389,7 @@ VTA.Survey.Section.prototype.addRadioQuestion = function(o) {
     }).appendTo($q_wrapper);
 
     $('<label/>').attr({
-      for: self.answer_index
+      for: 'a_' + self.answer_index
     }).text(ans['title']).appendTo($q_wrapper);
 
     self.answer_index += 1;
@@ -403,7 +410,7 @@ VTA.Survey.Section.prototype.addTextQuestion = function(o) {
   var $q_wrapper = $('<li class="question text"/>');
 
   $('<label/>').attr({
-    for: this.answer_index
+    for: 'a_' + this.answer_index
   }).text(question).appendTo($q_wrapper);
 
   var $select = null;
@@ -414,16 +421,17 @@ VTA.Survey.Section.prototype.addTextQuestion = function(o) {
       pattern: "[0-9]*",
       maxlength : "5",
       min:"0",
+      id: 'a_' + self.answer_index,
       'data-survey-id': this.section_id
     }).appendTo($q_wrapper);
   } else {
     $select = $('<input type="text"/>').attr({
       name: qid,
-      'data-survey-id': this.section_id
+      'data-survey-id': this.section_id,
+      id: 'a_' + self.answer_index,
     }).appendTo($q_wrapper);
   }
    
-
   this.question_index += 1;
   $frag.append($q_wrapper);
   $frag.appendTo(this.questions_wrapper);
@@ -441,16 +449,14 @@ VTA.Survey.Section.prototype.addDropdownQuestion = function(o) {
     return;
   }
   var $frag = $(document.createDocumentFragment());
-  var $q_wrapper = $('<li class="question dropdown"/>');
-
-  $('<label/>').attr({
-    for: this.answer_index
-  }).text(question).appendTo($q_wrapper);
+  var $q_wrapper = $('<li class="question dropdown"/>').appendTo($frag);
 
   var $select = $('<select/>').attr({
     name: qid,
-    'data-survey-id': this.section_id
-  }).appendTo($q_wrapper);
+    'data-survey-id': this.section_id,
+    title : question,
+    'data-width':"50%"
+  }).addClass('selectpicker').appendTo($frag);
 
   answers.forEach(function(ans) {
     $('<option/>').attr({
@@ -461,7 +467,6 @@ VTA.Survey.Section.prototype.addDropdownQuestion = function(o) {
   });
 
   this.question_index += 1;
-  $frag.append($q_wrapper);
   $frag.appendTo(this.questions_wrapper);
 };
 
@@ -482,14 +487,14 @@ VTA.Survey.Section.prototype.addCheckboxQuestion = function(o) {
 
   answers.forEach(function(ans) {
     $('<input type="checkbox"/>').attr({
-      id: ans.pk,
+      id: 'a_' + self.answer_index,
       name: qid,
       value: ans['choice_text'],
       'data-survey-id': this.section_id
     }).appendTo(this.$q_wrapper);
 
     $('<label/>').attr({
-      for: self.answer_index
+      for: 'a_' + self.answer_index
     }).text(ans['choice_text']).appendTo($q_wrapper);
 
     self.answer_index += 1;
@@ -533,7 +538,7 @@ VTA.Survey.Section.prototype.addRangeQuestion = function(o) {
   var dl_id = 'q_' + this.question_index + '_dl';
   $('<input type="range"/>')
     .attr({
-      id: answers[0].pk,
+      id: 'a_' + self.answer_index,
       name: qid,
       required: true,
       list: dl_id,
@@ -543,15 +548,6 @@ VTA.Survey.Section.prototype.addRangeQuestion = function(o) {
       value: input_vals.min + (input_vals.max - input_vals.min) / 2,
       'data-survey-id': this.section_id
     }).appendTo($input_wrapper);
-
-  var $dl = $('<datalist/>').attr({
-    id: dl_id
-  }).appendTo($input_wrapper);
-  for (var i = input_vals.min; i <= input_vals.max; i = i + input_vals.step) {
-    $('<option/>').attr({
-      value: i
-    }).appendTo($dl);
-  }
   
   $left_option.appendTo($input_wrapper);
   $right_option.appendTo($input_wrapper);

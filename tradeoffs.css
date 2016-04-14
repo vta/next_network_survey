@@ -16,6 +16,15 @@ img { box-sizing: content-box; }
 
 
 
+input[type="text"], input[type="number"] {
+    border:2px solid rgb(205,205,205);
+    -moz-border-radius:5px;-webkit-border-radius:5px;border-radius:5px;
+    margin-left: 7px;
+}
+
+.radio input[type=radio], input[type=radio] {margin-left:0;}
+.questions_wrapper>p {font-weight:bold;}
+.radio label {margin-right:10px;}
 
 .questions_wrapper, .results_wrapper, #domg{
     display: block;
