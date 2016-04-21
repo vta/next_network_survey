@@ -3,7 +3,7 @@ VTA.user_language = (navigator.languages ? navigator.languages[0] : (navigator.l
 
 
 VTA.Survey = VTA.Survey || {};
-VTA.Survey.SERVER = ['http://localhost:5000/survey', 'https://young-sea-59324.herokuapp.com/survey'][1];
+VTA.Survey.SERVER = ['http://localhost:5000/survey', 'https://young-sea-59324.herokuapp.com/survey'][0];
 
 
 
@@ -31,77 +31,178 @@ VTA.Countdown = {
 /*
  * @constructor
  */
-VTA.domg = function(data, elem) {
-  this.$elem = $(elem);
+VTA.domg = function(data, elem, display_type) {
+  this.type = 'bar';
+  if (display_type && display_type==='marker'){
+    this.type = 'marker';
+  }
+
+  $(elem).empty();
+  this.$elem = $('<ol id="domg"/>').appendTo(elem);
   this.data = data;
 
+  if (this.type === 'marker') {
+    this.show_markers();
+  } else {
+    this.show_bars();
+  }
+};
+
+
+VTA.domg.prototype.show_bars = function() {
+  window.console.log('show_bars');
   var self = this;
-  $.each(data, function(i, item) {
-    self.addBar(item['name'], item['labels'], item['values']);
+  $.each(this.data, function(i, item) {
+    var $bar_wrapper = $('<li/>')
+      .addClass('horiz-bar-wrapper');
+
+    var bar = $('<div/>')
+      .addClass('horiz-bar')
+      .data('name', item['name']).appendTo($bar_wrapper);
+
+    var sub_label = 'bar_' + item['values'].length;
+
+    $.each(item['values'], function(j, val) {
+      var bar_fill_wrapper = $('<div/>')
+        .addClass('bar-fill-wrapper')
+        .addClass(sub_label)
+        .text(val['label']);
+
+      var fill = $('<div/>')
+        .addClass('hidden')
+        .data('value-pct', val['value-pct'])
+        .data('label', val['label']);
+      bar_fill_wrapper.append(fill);
+      $bar_wrapper.append(bar_fill_wrapper);
+    });
+
+    self.$elem.append($bar_wrapper);
   });
 
-  setTimeout(function() {
-    self.fill();
-  }, 500);
-};
-
-VTA.domg.prototype.addBar = function(name, labels, values) {
-  var bar_wrapper = $('<div/>').addClass('horiz-bar-wrapper');
-
-
-  var bar = $('<div/>')
-    .addClass('horiz-bar')
-    .data('name', name)
-    .appendTo(bar_wrapper);
-
-  var sub_label = 'bar_' + values.length;
-
-  $.each(values, function(j, val) {
-    var label = $('<span/>').text(val['label']);
-
-    var fill = $('<div/>')
-      .addClass('bar-fill')
-      .data('value-pct', val['value-pct'])
-      .data('label', val['label']);
-
-    var bar_fill_wrapper = $('<div/>')
-      .addClass('bar-fill-wrapper')
-      .addClass(sub_label)
-      .append(label)
-      .append(fill)
-      .appendTo(bar);
-  });
-
-  var label_l = $('<span/>').addClass('left').text(labels[0]).appendTo(bar_wrapper);
-  var label_r = $('<span/>').addClass('right').text(labels[1]).appendTo(bar_wrapper);
-
-  this.$elem.append(bar_wrapper);
-};
-
-VTA.domg.prototype.fill = function() {
-  this.$elem.find('.horiz-bar .bar-fill').each(function(index, elem) {
+  this.$elem.find('.horiz-bar .hidden').each(function(index, elem) {
     var $elem = $(elem);
+    $elem.removeClass('hidden');
+    $elem.addClass('bar-fill');
     setTimeout(function() {
       $elem.css('width', parseInt($elem.data('value-pct'), 10) + '%');
     }, 750);
   });
 };
 
+VTA.domg.prototype.show_markers = function() {
+  var self = this;
+  window.console.log('show_markers');
+
+  function snapMarkersToPositions() {
+    self.$elem.find('.graph-inner-wrapper .data-marker').each(function(index, elem) {
+      var $elem = $(elem);
+      var data_val = parseInt($elem.data('value-pct'), 10);
+      markerToPos($elem, data_val);
+      snapToTop($elem);
+    });
+  }
+
+  function markerToPos($elem, val) {
+    var parent_width = $elem.parent().width();
+    var marker_width = $elem.width();
+    var offset = parseInt($elem.parent().css('marginLeft'), 10) - $elem.parent().position().left;
+    if (val > 60) {
+      $elem.addClass('flip-right');
+      offset += -(marker_width + 20) / 2;
+    } else if (val > 40 && val < 60) {
+      $elem.addClass('flip-center');
+      offset += 0;
+    } else {
+      offset += (marker_width - 20) / 2;
+    }
+    $elem.css({
+      left: parent_width * (val / 100) + offset + 'px'
+    });
+  }
+
+  function snapToTop($elem) {
+    if ($elem.hasClass('collides')) {
+      $elem.css({
+        top: ($elem.parent().position().top +$elem.parent().height() + 7) + 'px'
+      });
+    } else {
+      $elem.css({
+        top: ($elem.parent().position().top - $elem.height() + 7) + 'px'
+      });
+    }
+  }
+
+  $.each(this.data, function(i, item) {
+
+    item['values'].sort(function(a, b) {
+      return a['value-pct'] > b['value-pct'];
+    });
+
+    var outer_wrapper = $('<li/>')
+      .addClass('graph-outer-wrapper')
+      .appendTo(self.$elem);
+
+    var inner_wrapper = $('<div/>')
+      .addClass('graph-inner-wrapper')
+      .appendTo(outer_wrapper);
+
+    var sub_label = 'marker_' + item['values'].length;
+    for (var j = 0; j < item['values'].length; j++) {
+      var val = item['values'][j];
+      var this_val = val['value-pct'];
+
+      var collides = '';
+      if (j > 0 && Math.abs(val['value-pct'] - item.values[j - 1]['value-pct']) <= 15) {
+        collides = 'collides';
+      }
+
+      var $marker = $('<div/>')
+        .addClass('data-marker')
+        .addClass(sub_label)
+        .addClass('hidden')
+        .addClass(collides)
+        .data('value-pct', val['value-pct'])
+        .text(val['label'])
+        .appendTo(inner_wrapper);
+    }
+
+    var bar = $('<div/>')
+      .addClass('horiz-bar')
+      .data('name', item['name'])
+      .appendTo(inner_wrapper);
+
+    var label_l = $('<span/>').addClass('left').text(item['labels'][0]).appendTo(outer_wrapper);
+    var label_r = $('<span/>').addClass('right').text(item['labels'][1]).appendTo(outer_wrapper);
+  });
+
+  setTimeout(function() {
+    self.$elem.find('.graph-inner-wrapper .data-marker').each(function(index, elem) {
+      var $elem = $(elem);
+      markerToPos($elem, 0);
+      snapToTop($elem);
+      $elem.removeClass('hidden');
+    });
+  }, 1);
+
+  setTimeout(snapMarkersToPositions, 750);
+  $(window).resize(snapMarkersToPositions);
+};
+
+
+
 
 
 /*
  * @constructor
  */
-VTA.Survey.Results = function(id, results_elem) {
+VTA.Survey.Results = function(id, results_elem_query_selector, providedSurveyValues) {
   this.SURVEY_API = VTA.Survey.SERVER;
+  this.ProvidedSurveyValues = providedSurveyValues || null;
   this.survey_id = id;
   this.QuestionDefinitions = null;
   this.QuesitonTitles = [];
   this.SurveyAverageValues = null;
-  this.results_wrapper = $(results_elem);
-  this.results_wrapper.empty();
-
-  this.$domg = $('<div id="domg"/>').appendTo(this.results_wrapper);
+  this.results_wrapper = $(results_elem_query_selector);
 };
 
 VTA.Survey.Results.prototype.init = function() {
@@ -125,7 +226,7 @@ VTA.Survey.Results.prototype.init = function() {
 
       self.SurveyAverageValues = data['averages'];
       self.SurveyResponseCount = data['stats']['count'];
-      window.console.log('Received data from '+self.SurveyResponseCount +' survey responses.');
+      window.console.log('Received data from '+self.SurveyResponseCount +' survey responses.', self.SurveyAverageValues);
       self.show();
     });
 };
@@ -137,23 +238,26 @@ VTA.Survey.Results.prototype.show = function($elem) {
   }
 
   var self = this;
-
   var domg_data = [];
-  Object.keys(this.SurveyAverageValues).map(function(key) {
-    domg_data.push({
-      "name": self.QuestionDefinitions[key].title,
-      "labels": [
-        self.QuestionDefinitions[key].answers[0].title,
-        self.QuestionDefinitions[key].answers[1].title
-      ],
-      "values": [{
-        "label": "",
-        "value-pct": 100 * ((self.SurveyAverageValues[key]-1) / (self.QuestionDefinitions[key].scale_max-1))
-      }]
+  if (!this.ProvidedSurveyValues){
+    Object.keys(this.SurveyAverageValues).map(function(key) {
+      domg_data.push({
+        "name": self.QuestionDefinitions[key].title,
+        "labels": [
+          self.QuestionDefinitions[key].answers[0].title,
+          self.QuestionDefinitions[key].answers[1].title
+        ],
+        "values": [{
+          "label": "average response",
+          "value-pct": 100 * ((self.SurveyAverageValues[key]-1) / (self.QuestionDefinitions[key].scale_max-1))
+        }]
+      });
     });
-  });
+  } else {
+    domg_data = this.ProvidedSurveyValues;
+  }
 
-  var d = new VTA.domg(domg_data, this.$domg[0]);
+  var d = new VTA.domg(domg_data, this.results_wrapper[0], 'marker');
 };
 
 
@@ -298,6 +402,12 @@ VTA.Survey.Controller.prototype.getFormResults = function(formElement) {
           "other_answer": elem.value
         });
         break;
+      case 'select-one':
+        user_response[survey_id].push({
+          "question": q['pk'],
+          "answer": elem.value
+        });
+        break;
       default:
         user_response[survey_id].push({
           "question": q['pk'],
@@ -311,17 +421,51 @@ VTA.Survey.Controller.prototype.getFormResults = function(formElement) {
 };
 
 VTA.Survey.Controller.prototype.done = function(user_answers) {
+  var self = this;
   for (var i = 0; i < this.survey_ids.length; i++) {
     var user_data = JSON.stringify(user_answers[this.survey_ids[i]], null, ' ');
 
     $.post(this.SURVEY_API + '/responses/', user_data)
       .done(function(data) {
-        window.console.log('received data back from server', data);
+        window.console.log('Received data from '+self.SurveyResponseCount +' survey responses.');
       });
   }
 
-  vta_survey_results = new VTA.Survey.Results(2, this.results_wrapper);
-  vta_survey_results.init();
+  var survey_id = 2;
+
+  $.get(this.SURVEY_API + '/responses/' + survey_id + '/?output=average')
+    .done(function(data) {
+
+      self.SurveyAverageValues = data['averages'];
+      self.SurveyResponseCount = data['stats']['count'];
+      window.console.log('Received data from '+self.SurveyResponseCount +' survey responses.');
+
+      var user_responses_indexed = {};
+      for (var i= 0; i < user_answers[survey_id].length; i++){
+        user_responses_indexed[user_answers[survey_id][i]['question']] = parseInt(user_answers[survey_id][i]['other_answer_numeric'],10);
+      }
+      
+      var domg_data = [];
+      var q_id = null;
+      for (var i = 0; i < user_answers[survey_id].length; i++){
+        q_id = user_answers[survey_id][i]['question'];
+        domg_data.push({
+          "name": self.QuestionDefinitions[survey_id][q_id].title,
+          "labels": [
+            self.QuestionDefinitions[survey_id][q_id].answers[0].title,
+            self.QuestionDefinitions[survey_id][q_id].answers[1].title
+          ],
+          "values": [{
+            "label": "average response",
+            "value-pct": 100 * ((self.SurveyAverageValues[q_id]-1) / (self.QuestionDefinitions[survey_id][q_id]['scale_max']-1))
+          }, {
+            "label": "your response",
+            "value-pct": 100 * ((user_responses_indexed[q_id]-1) / (self.QuestionDefinitions[survey_id][q_id]['scale_max']-1))  // FIXME! not actual number
+          }]
+        });
+      }
+      var d = new VTA.domg(domg_data, self.results_wrapper, 'marker');
+    });
 };
 
 VTA.Survey.Controller.prototype.ok = function() {

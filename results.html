@@ -10,7 +10,6 @@
 
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.css" type="text/css">
 
-
     <link rel="stylesheet" href="tradeoffs.css">
 
     <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
@@ -40,7 +39,7 @@
             "use strict";
             document.addEventListener("touchstart", function(){}, true);
             window.addEventListener('load', function(){
-                vta_survey_results = new VTA.Survey.Results(2, document.getElementById('results_wrapper'));
+                vta_survey_results = new VTA.Survey.Results(2, '#results_wrapper');
                 vta_survey_results.init();
             }, false);
         })();
