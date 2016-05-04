@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Quiz</title>
+
+    <link rel="stylesheet" href="/squarespace-css/normalize.css" type="text/css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.css" type="text/css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="tradeoffs.css">
+
+    <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.js"></script>
+
+
+    
+    <script src="VTA.Survey.js"></script>
+
+</head>
+
+<body>
+
+
+
+
+
+    <ul>
+        <li>
+            <a href="index.html">transit choices survey</a>
+        </li>
+        <li>
+            <a href="ridership.html">ridership poll</a>
+        </li>
+        <li>
+            <a href="results.html">results</a>
+        </li>
+    </ul>
+
+
+    <form id="main_form" >
+      <div id="ridership_wrapper"></div>
+
+      <div class="form-button-wrapper form-button-wrapper--align-center">
+        <button id="btn" type="submit" class="button sqs-system-button sqs-editable-button" style="margin-left: auto; margin-right: auto; display: block;">Submit answers and compare to other results</button>
+      </div>
+    </form>
+    <div id="results_wrapper">
+    </div>
+        <script>
+    //<![CDATA[
+        var vta_survey = null;
+        (function() {
+            "use strict";
+            document.addEventListener("touchstart", function(){}, true);
+            window.addEventListener('load', function(){
+                vta_survey = new VTA.Survey.Controller({
+                    form_elem : document.getElementById('main_form'),
+                    survey_targets : { 3 : {target_elem :'#ridership_wrapper', show_results:true}},
+                    results_elem : document.getElementById('results_wrapper')
+                });
+                vta_survey.init();
+            }, false);
+
+        })();
+    //]]>
+    </script>
+
+
+    <!--
+  Below we include the Login Button social plugin. This button uses
+  the JavaScript SDK to present a graphical Login button that triggers
+  the FB.login() function when clicked.
+-->
+
+<fb:login-button scope="public_profile,email" onlogin="checkLoginState();">
+</fb:login-button>
+
+<div id="status">
+</div>
+
+
+
+</body>
+
+</html>

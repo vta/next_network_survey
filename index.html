@@ -123,23 +123,47 @@
 
     <ul>
         <li>
-            <a href="index.html">survey</a>
+            <a href="index.html">transit choices survey</a>
+        </li>
+        <li>
+            <a href="ridership.html">ridership poll</a>
         </li>
         <li>
             <a href="results.html">results</a>
         </li>
     </ul>
 
+
     <form id="main_form" >
       <div id="survey_wrapper"></div>
       <div id="demographics_wrapper"></div>
 
-      <div class="form-button-wrapper form-button-wrapper--align-left">
-        <button id="btn" type="submit" class="button sqs-system-button sqs-editable-button">Submit answers and view results</button>
+      <div class="form-button-wrapper form-button-wrapper--align-center">
+        <button id="btn" type="submit" class="button sqs-system-button sqs-editable-button" style="margin-left: auto; margin-right: auto; display: block;">Submit answers and compare to other results</button>
       </div>
     </form>
     <div id="results_wrapper">
     </div>
+        <script>
+    //<![CDATA[
+        var vta_survey = null;
+        (function() {
+            "use strict";
+            document.addEventListener("touchstart", function(){}, true);
+            window.addEventListener('load', function(){
+                vta_survey = new VTA.Survey.Controller({
+                    form_elem : document.getElementById('main_form'),
+                    survey_targets : { 2 : {target_elem :'#survey_wrapper', show_results:true}, 1 : {target_elem:'#demographics_wrapper', show_results:false}},
+                    results_elem : document.getElementById('results_wrapper')
+                });
+                vta_survey.init();
+            }, false);
+
+        })();
+    //]]>
+    </script>
+
+
     <!--
   Below we include the Login Button social plugin. This button uses
   the JavaScript SDK to present a graphical Login button that triggers
@@ -154,24 +178,6 @@
 
 
 
-        <script>
-    //<![CDATA[
-        var vta_survey = null;
-        (function() {
-            "use strict";
-            document.addEventListener("touchstart", function(){}, true);
-            window.addEventListener('load', function(){
-                vta_survey = new VTA.Survey.Controller({
-                    form_elem : document.getElementById('main_form'),
-                    survey_targets : { 2 : {target_elem :'#survey_wrapper'}, 1 : {target_elem:'#demographics_wrapper'}},
-                    results_elem : document.getElementById('results_wrapper')
-                });
-                vta_survey.init();
-            }, false);
-
-        })();
-    //]]>
-    </script>
 </body>
 
 </html>
