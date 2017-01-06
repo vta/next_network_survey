@@ -37,6 +37,9 @@
             <a href="ridership.html">ridership poll</a>
         </li>
         <li>
+            <a href="budget.html">budget balancer</a>
+        </li>
+        <li>
             <a href="results.html">results</a>
         </li>
     </ul>
@@ -49,9 +52,11 @@
         <button id="btn" type="submit" class="button sqs-system-button sqs-editable-button" style="margin-left: auto; margin-right: auto; display: block;">Submit answers and compare to other results</button>
       </div>
     </form>
-    <div id="results_wrapper">
+    <div id="results_wrapper" class="ridership">
     </div>
-        <script>
+
+    
+    <script>
     //<![CDATA[
         var vta_survey = null;
         (function() {
@@ -60,8 +65,8 @@
             window.addEventListener('load', function(){
                 vta_survey = new VTA.Survey.Controller({
                     form_elem : document.getElementById('main_form'),
-                    survey_targets : { 3 : {target_elem :'#ridership_wrapper', show_results:true}},
-                    results_elem : document.getElementById('results_wrapper')
+                    survey_targets : { 3 : {target_elem :'#ridership_wrapper', show_results:true, center_tick:true}},
+                    results_elem : document.getElementById('results_wrapper'),
                 });
                 vta_survey.init();
             }, false);

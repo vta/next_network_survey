@@ -3,28 +3,32 @@
 
 <head>
     <meta charset="utf-8">
-    
-    <meta content='True' name='HandheldFriendly' />
-    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0' name='viewport' />
-    <meta name="viewport" content="width=device-width" />
-
-    <title>Quiz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Budget Balancer</title>
 
     <link rel="stylesheet" href="/squarespace-css/normalize.css" type="text/css">
-
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.css" type="text/css">
-
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css">
     <link rel="stylesheet" href="tradeoffs.css">
 
+  <link href='https://fonts.googleapis.com/css?family=Roboto:900' rel='stylesheet' type='text/css'>
+
     <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.1.1/rangeslider.min.js"></script>
 
 
-    <script src="VTA.Survey.js"></script>
 
 </head>
 
 <body>
+
+
+
+
+
     <ul>
         <li>
             <a href="index.html">transit choices survey</a>
@@ -39,22 +43,23 @@
             <a href="results.html">results</a>
         </li>
     </ul>
-    <div id="results_wrapper">
-        
-    </div>
-    <script type="text/javascript">
-    //<![CDATA[
-        var vta_survey_results = null;
-        (function() {
-            "use strict";
-            document.addEventListener("touchstart", function(){}, true);
-            window.addEventListener('load', function(){
-                vta_survey_results = new VTA.Survey.Results(2, '#results_wrapper');
-                vta_survey_results.init();
-            }, false);
-        })();
-    //]]>
-    </script>
+
+
+<div id="status">
+submission OK!<br/>
+redirecting back to the survey in 2 seconds.
+</div>
+
+<script>
+window.setTimeout(function(){
+
+ window.location.href = "/budget.html"
+}, 2000)
+</script>
+
+
+
 </body>
 
 </html>
+

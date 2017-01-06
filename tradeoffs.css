@@ -14,6 +14,11 @@ html, body, body>* {
 
 
 
+/* fix squarespace's layout */
+.sidebar-position-right .one-sidebar #content-wrapper { border-right-width: 0;}
+#page_footer .row {margin-left:0; margin-right:0;}
+#page_footer .row [class*=sqs-col] .sqs-block {padding-left:0; padding-right:0;}
+
 script {display:none;}
 
 html { box-sizing: border-box; }
@@ -25,6 +30,9 @@ input[type="text"], input[type="number"] {
     -moz-border-radius:5px;-webkit-border-radius:5px;border-radius:5px;
     margin-left: 7px;
 }
+
+.loading_wrapper, .loading_wrapper img {max-width: 300px;position: relative; margin-left:auto; margin-right: auto; display: block;}
+.loading_wrapper p {text-align: center;margin:20px;}
 
 .radio input[type=radio], input[type=radio] {margin-left:0;}
 .questions_wrapper>p {font-weight:bold;}
@@ -149,15 +157,30 @@ ol li>.question_index{
 }
 
 
+/*   segmented gradient   */
+#ridership_wrapper .rangeslider.rangeslider--horizontal, #ridership_wrapper .horiz-bar {
+  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#3789cd+0,8ec61a+99 */
+background: #3789cd; /* Old browsers */
+background: -moz-linear-gradient(left,  #3789cd 0%, #8ec61a 99%); /* FF3.6-15 */
+background: -webkit-linear-gradient(left,  #3789cd 0%,#8ec61a 99%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to right,  #3789cd 0%,#8ec61a 99%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3789cd', endColorstr='#8ec61a',GradientType=1 ); /* IE6-9 */
+}
+#ridership_wrapper ol .question_index {display :none;}
+
+
+
+
 
 #demographics_wrapper {margin-top:40px;margin-bottom:40px;padding:20px;}
 #demographics_wrapper .question.text {display:inline-block; float:left;width:50%;}
 #demographics_wrapper .question.text label {display:block;}
 #demographics_wrapper .question.text {display:inline-block; float:left;width:50%;}
 
+#demographics_wrapper .questions_wrapper, #demographics_wrapper .checkbox, #demographics_wrapper .radio {display: -webkit-flex; display: -ms-flexbox; display: flex; flex-direction: column;}
+
 @media all and (min-width: 600px) {
 #demographics_wrapper .question.dropdown  {display:inline-block; float:left;width:50%;}
-#demographics_wrapper .question.dropdown:nth-child(even){padding-left: 10px;}
 #demographics_wrapper .question.dropdown>* {width:100%;} 
 #demographics_wrapper:after {display:block;width:0px;height:0px;content:'';clear:both;float:none;}
 }
@@ -303,6 +326,29 @@ ol li>.question_index{
   float: right;
 }
 
+.question.range .thirds {
+  width: 33%;
+  float:left;
+    display: inline-block;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  position: relative;
+  margin: 10px 0 0px 0;
+  padding: 10px;
+  color: #3c3c3c;
+  font-weight: bold;
+}
+.question.range .thirds.left {
+  text-align:left;
+}
+.question.range .thirds.center {
+  text-align:middle;
+}
+.question.range .thirds.right {
+  text-align:right;
+}
+
+
 .graph-outer-wrapper:nth-child(odd) {
   background-color: rgb(224, 242, 247);
 }
@@ -398,4 +444,15 @@ ol li>.question_index{
   -ms-transition: left 1s ease-in-out;
   -o-transition: left 1s ease-in-out;
   transition: left 0.5s ease-in-out;
+}
+
+
+  
+input[type='number'] {
+    -moz-appearance:textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
 }
